@@ -1,0 +1,23 @@
+(library
+  (name discord)
+  (public_name discord)
+  (libraries
+    objects
+    rest
+
+    cohttp-lwt-unix
+    core
+    lwt
+    lwt.unix
+    ppx_deriving_yojson.runtime
+    yojson
+    websocket
+    websocket-lwt-unix
+  )
+  (preprocess (pps
+    ppx_jane
+    lwt_ppx
+    ppx_deriving.enum
+    ppx_deriving_yojson
+  ))
+)

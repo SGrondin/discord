@@ -1,0 +1,13 @@
+(library
+  (name latch)
+  (public_name discord.latch)
+  (libraries
+    core_kernel
+    lwt
+    lwt.unix
+  )
+  (preprocess (pps
+    ppx_jane
+    lwt_ppx
+  ))
+)
