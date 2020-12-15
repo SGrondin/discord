@@ -21,6 +21,14 @@ type event =
   | Error_discontinuity        of Internal_state.counter
 [@@deriving sexp]
 
+exception
+  Parsing_error of {
+    data: string;
+    message: string;
+    exn: Exn.t;
+  }
+[@@deriving sexp]
+
 val in_background : on_exn:(exn -> unit Lwt.t) -> (unit -> unit Lwt.t) -> unit
 
 module type S = sig

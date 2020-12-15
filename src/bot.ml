@@ -27,6 +27,14 @@ type event =
   | Error_discontinuity        of Internal_state.counter
 [@@deriving sexp]
 
+exception
+  Parsing_error of {
+    data: string;
+    message: string;
+    exn: Exn.t;
+  }
+[@@deriving sexp]
+
 type connection = {
   ic: Lwt_io.input_channel;
   oc: Lwt_io.output_channel;
@@ -113,7 +121,10 @@ end = struct
     | Frame.{ opcode = Text; content; _ }
      |Frame.{ opcode = Binary; content; _ } -> (
       let raw = Yojson.Safe.from_string content |> Data.Payload.of_yojson |> Result.ok_or_failwith in
-      let message = Message.parse raw in
+      let message =
+        try Message.parse raw with
+        | exn -> raise (Parsing_error { data = content; message = Exn.to_string exn; exn })
+      in
       let%lwt user_state = trigger_event user_state (Before_action message) in
       Internal_state.received_seq raw.s internal_state;
       match%lwt Router.handle_message login ~send ~cancel { internal_state; user_state } message with

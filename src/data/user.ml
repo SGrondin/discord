@@ -47,7 +47,7 @@ end
 module Self = struct
   type member = {
     user: t option; [@default None]
-    nick: string option;
+    nick: string option; [@default None]
     roles: Snowflake.t list;
     joined_at: Timestamp.t;
     premium_since: Timestamp.t option; [@default None]
