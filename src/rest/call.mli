@@ -6,10 +6,6 @@ type _ handler =
   | Parse     : (Yojson.Safe.t -> ('a, string) result) -> 'a handler
   | Parse_exn : (Yojson.Safe.t -> 'a) -> 'a handler
 
-module Uri : sig
-  type t = Uri.t [@@deriving sexp, yojson]
-end
-
 val name : string
 
 val latch : Latch.t

@@ -12,7 +12,7 @@ type session_start_limit = {
 [@@deriving sexp, fields, yojson { strict = false }]
 
 type t = {
-  url: Call.Uri.t;
+  url: Basics.Url.t;
   shards: int;
   session_start_limit: session_start_limit;
 }

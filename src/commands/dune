@@ -1,0 +1,19 @@
+(library
+  (name commands)
+  (public_name discord.commands)
+  (inline_tests)
+  (libraries
+    basics
+    data
+    core_kernel
+    ppx_deriving_yojson.runtime
+    yojson
+    uri
+    zarith
+  )
+  (preprocess (pps
+    ppx_jane
+    ppx_deriving_yojson
+    ppx_deriving.enum
+  ))
+)

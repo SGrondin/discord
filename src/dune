@@ -1,8 +1,11 @@
 (library
   (name discord)
   (public_name discord)
+  (inline_tests)
   (libraries
-    objects
+    data
+    commands
+    events
     rest
 
     cohttp-lwt-unix

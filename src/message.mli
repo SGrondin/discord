@@ -6,16 +6,16 @@ type parsed =
   | Reconnect
   | Ready              of Events.Ready.t
   | Resumed
-  | Voice_state_update of Events.Voice_state_update.t
-  | Guild_create       of Events.Guild_create.t
-  | Message_create     of Objects.Message.t
+  | Voice_state_update of Data.Voice_state.t
+  | Guild_create       of Data.Guild.t
+  | Message_create     of Data.Message.t
   | Other
 [@@deriving sexp]
 
 type t = {
-  raw: Protocol.Recv.t;
+  raw: Data.Payload.t;
   parsed: parsed;
 }
 [@@deriving sexp]
 
-val parse : Protocol.Recv.t -> t
+val parse : Data.Payload.t -> t

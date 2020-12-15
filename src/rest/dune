@@ -3,6 +3,7 @@
   (public_name discord.rest)
   (libraries
     latch
+    data
 
     cohttp-lwt-unix
     core_kernel

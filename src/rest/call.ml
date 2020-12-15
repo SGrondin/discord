@@ -8,22 +8,6 @@ let name = "Camlbot"
 
 let headers ~token = Header.of_list [ "Authorization", sprintf "Bot %s" token; "User-Agent", name ]
 
-module Uri = struct
-  include Uri
-
-  let t_of_sexp = function
-  | Sexp.Atom s -> of_string s
-  | sexp -> failwithf "Impossible to parse S-Exp %s into an URI" (Sexp.to_string sexp) ()
-
-  let sexp_of_t uri = Sexp.Atom (to_string uri)
-
-  let to_yojson uri : Yojson.Safe.t = `String (to_string uri)
-
-  let of_yojson : Yojson.Safe.t -> (t, string) result = function
-  | `String s -> Ok (of_string s)
-  | json -> Error (sprintf "Impossible to parse JSON '%s' into an URI" (Yojson.Safe.to_string json))
-end
-
 (* https://discord.com/api/v8/ *)
 let base_uri = Uri.make ~scheme:"https" ~host:"discord.com" ()
 

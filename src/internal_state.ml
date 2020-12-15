@@ -18,7 +18,7 @@ type heartbeat = {
 
 type heartbeat_loop = {
   interval: int;
-  respond: Protocol.Send.t -> unit Lwt.t;
+  respond: Data.Payload.t -> unit Lwt.t;
   cancel: Websocket.Frame.t Lwt.u;
 }
 
@@ -34,7 +34,7 @@ let rec loop heartbeat ({ respond; cancel; interval } as heartbeat_loop) =
           then raise (Discontinuity_error { count = heartbeat.count; ack = heartbeat.ack })
           else begin
             heartbeat.count <- heartbeat.count + 1;
-            respond @@ Commands.Heartbeat.to_message heartbeat.seq
+            respond @@ Commands.Heartbeat.to_payload heartbeat.seq
           end)
         (fun exn ->
           Lwt.wakeup_later_exn cancel exn;

@@ -60,129 +60,6 @@ let () =
   let _sigterm = Lwt_unix.on_signal Sys.sigterm handler in
   ()
 
-let handle_frame ~trigger_event login cancel send ({ internal_state; user_state } as state) frame =
-  let open Websocket in
-  match frame with
-  | Frame.{ opcode = Ping; _ } ->
-    let%lwt () = send @@ Frame.create ~opcode:Frame.Opcode.Pong () in
-    Router.forward state
-  | Frame.{ opcode = Close; extension; final; content } ->
-    let%lwt user_state = trigger_event user_state (Error_discord_server { extension; final; content }) in
-    Router.reconnect ~wait:None { internal_state; user_state }
-  | Frame.{ opcode = Pong; _ } -> Router.forward state
-  | Frame.{ opcode = Text; content; _ }
-   |Frame.{ opcode = Binary; content; _ } -> (
-    let raw = Yojson.Safe.from_string content |> Protocol.Recv.of_yojson |> Result.ok_or_failwith in
-    let message = Message.parse raw in
-    let%lwt user_state = trigger_event user_state (Before_action message) in
-    Internal_state.received_seq raw.s internal_state;
-    match%lwt Router.handle_message login ~send ~cancel { internal_state; user_state } message with
-    | R_Forward { internal_state; user_state } ->
-      let%lwt user_state = trigger_event user_state (After_action message) in
-      Router.forward { internal_state; user_state }
-    | R_Reconnect _ as x -> Lwt.return x
-  )
-  | frame -> failwithf "Unhandled frame: %s" (Frame.show frame) ()
-
-let rec event_loop ~trigger_event login connection recv ({ internal_state; user_state } as state) =
-  let%lwt action =
-    Lwt.catch
-      (fun () ->
-        let%lwt frame = recv () in
-        match%lwt handle_frame ~trigger_event login connection.cancel connection.send state frame with
-        | R_Forward state -> forward state
-        | R_Reconnect (wait, { internal_state; user_state }) ->
-          Internal_state.terminate internal_state;
-          let%lwt user_state = trigger_event user_state Before_reconnecting in
-          reconnect ~wait { internal_state; user_state })
-      (fun exn ->
-        Internal_state.terminate internal_state;
-        let open Core in
-        match exn with
-        | End_of_file ->
-          let%lwt user_state = trigger_event user_state Error_connection_closed in
-          reconnect ~wait:None { internal_state; user_state }
-        | Unix.Unix_error (Unix.ECONNRESET, _c, _s) ->
-          let%lwt user_state = trigger_event user_state Error_connection_reset in
-          reconnect ~wait:None { internal_state; user_state }
-        | Unix.Unix_error (Unix.ETIMEDOUT, _c, _s) ->
-          let%lwt user_state = trigger_event user_state Error_connection_timed_out in
-          reconnect ~wait:None { internal_state; user_state }
-        | Internal_state.Discontinuity_error counter ->
-          let%lwt user_state = trigger_event user_state (Error_discontinuity counter) in
-          reconnect ~wait:None { internal_state = Internal_state.create (); user_state }
-        | exn -> exn_ exn)
-  in
-  match action with
-  | Forward state -> (event_loop [@tailcall]) ~trigger_event login connection recv state
-  | x -> Lwt.return x
-
-let connect ~trigger_event (Login.{ token; _ } as login) state =
-  let%lwt gateway = Rest.Gateway.bot ~token in
-  let uri =
-    begin
-      match Uri.scheme gateway.url with
-      | None
-       |Some "wss" ->
-        Uri.with_scheme gateway.url (Some "https")
-      | Some "ws" -> Uri.with_scheme gateway.url (Some "http")
-      | Some x -> failwithf "Invalid scheme in WS connect: %s" x ()
-    end
-    |> Fn.flip Uri.add_query_params [ "v", [ "8" ]; "encoding", [ "json" ] ]
-  in
-
-  let%lwt state =
-    let%lwt user_state = trigger_event state.user_state (Before_connecting gateway) in
-    Lwt.return { state with user_state }
-  in
-  let%lwt recv, send, ic, oc =
-    let%lwt endp = Resolver_lwt.resolve_uri ~uri Resolver_lwt_unix.system in
-    let ctx = Conduit_lwt_unix.default_ctx in
-    let%lwt client = Conduit_lwt_unix.endp_to_client ~ctx endp in
-    Ws.with_connection ~ctx client uri
-  in
-
-  let cancel_p, cancel = Lwt.wait () in
-  let cancelable_recv cancel_p recv () = Lwt.pick [ Lwt.protected cancel_p; recv () ] in
-  let send_timeout send frame = Lwt_unix.with_timeout 1.0 (fun () -> send frame) in
-
-  let connection = { ic; oc; send = send_timeout send; cancel } in
-
-  shutdown := Some (make_shutdown (send_timeout send));
-  let%lwt action = event_loop ~trigger_event login connection (cancelable_recv cancel_p recv) state in
-  Lwt.return (action, connection)
-
-let rec connection_loop ~trigger_event ~on_exn ~close_connection login blank_state previous_state =
-  let%lwt state =
-    let state = Option.value previous_state ~default:(blank_state ()) in
-    match%lwt connect ~trigger_event login state with
-    | Forward state, _ -> Lwt.return_some state
-    | Reconnect (wait, state), connection ->
-      let%lwt () = close_connection connection Reconnecting in
-      let%lwt () = Option.value_map wait ~default:Lwt.return_unit ~f:Lwt_unix.sleep in
-      Lwt.return_some state
-    | Exn Exit, connection ->
-      let%lwt () = close_connection connection Final in
-      Lwt.return_none
-    | Exn exn, connection ->
-      let%lwt () =
-        Backtrace.get ()
-        |> Backtrace.to_string_list
-        |> [%sexp_of: string list]
-        |> Sexp.to_string
-        |> Lwt_io.printlf "!!! %s"
-      in
-      let%lwt () = close_connection connection (Exception exn) in
-      let%lwt () = on_exn exn in
-      let%lwt () = Lwt_unix.sleep 5.0 in
-      (* Reset the user state to avoid an infinite crash loop *)
-      Lwt.return_some (blank_state ())
-  in
-  match state with
-  | Some _ as state ->
-    (connection_loop [@tailcall]) ~trigger_event ~on_exn ~close_connection login blank_state state
-  | None -> Lwt.return_unit
-
 module type S = sig
   type state
 
@@ -203,12 +80,10 @@ end = struct
   let trigger_event user_state event =
     Lwt.catch
       (fun () -> Bot.on_event user_state event)
-      (function
+      Lwt.Infix.(
+        function
         | Exit -> Exn.reraise Exit (Source_code_position.to_string [%here])
-        | exn ->
-          (* TODO: Change back to >|= once the stack leak is fixed *)
-          let%lwt () = Bot.on_exn exn in
-          Lwt.return user_state)
+        | exn -> Bot.on_exn exn >|= fun () -> user_state)
 
   let close_connection { ic; oc; send; cancel = _ } close =
     let code = code_of_close close in
@@ -223,6 +98,129 @@ end = struct
     in
     Lwt_unix.with_timeout 1.0 (fun () -> Lwt.join [ Lwt_io.close ic; Lwt_io.close oc ])
 
-  let start login =
-    connection_loop ~trigger_event ~on_exn:Bot.on_exn ~close_connection login blank_state None
+  let handle_frame login cancel send ({ internal_state; user_state } as state) frame =
+    let open Websocket in
+    match frame with
+    | Frame.{ opcode = Ping; _ } ->
+      let%lwt () = send @@ Frame.create ~opcode:Frame.Opcode.Pong () in
+      Router.forward state
+    | Frame.{ opcode = Close; extension; final; content } ->
+      let%lwt user_state =
+        trigger_event user_state (Error_discord_server { extension; final; content })
+      in
+      Router.reconnect ~wait:None { internal_state; user_state }
+    | Frame.{ opcode = Pong; _ } -> Router.forward state
+    | Frame.{ opcode = Text; content; _ }
+     |Frame.{ opcode = Binary; content; _ } -> (
+      let raw = Yojson.Safe.from_string content |> Data.Payload.of_yojson |> Result.ok_or_failwith in
+      let message = Message.parse raw in
+      let%lwt user_state = trigger_event user_state (Before_action message) in
+      Internal_state.received_seq raw.s internal_state;
+      match%lwt Router.handle_message login ~send ~cancel { internal_state; user_state } message with
+      | R_Forward { internal_state; user_state } ->
+        let%lwt user_state = trigger_event user_state (After_action message) in
+        Router.forward { internal_state; user_state }
+      | R_Reconnect _ as x -> Lwt.return x
+    )
+    | frame -> failwithf "Unhandled frame: %s" (Frame.show frame) ()
+
+  let rec event_loop login connection recv ({ internal_state; user_state } as state) =
+    let%lwt action =
+      Lwt.catch
+        (fun () ->
+          let%lwt frame = recv () in
+          match%lwt handle_frame login connection.cancel connection.send state frame with
+          | R_Forward state -> forward state
+          | R_Reconnect (wait, { internal_state; user_state }) ->
+            Internal_state.terminate internal_state;
+            let%lwt user_state = trigger_event user_state Before_reconnecting in
+            reconnect ~wait { internal_state; user_state })
+        (fun exn ->
+          Internal_state.terminate internal_state;
+          let open Core in
+          match exn with
+          | End_of_file ->
+            let%lwt user_state = trigger_event user_state Error_connection_closed in
+            reconnect ~wait:None { internal_state; user_state }
+          | Unix.Unix_error (Unix.ECONNRESET, _c, _s) ->
+            let%lwt user_state = trigger_event user_state Error_connection_reset in
+            reconnect ~wait:None { internal_state; user_state }
+          | Unix.Unix_error (Unix.ETIMEDOUT, _c, _s) ->
+            let%lwt user_state = trigger_event user_state Error_connection_timed_out in
+            reconnect ~wait:None { internal_state; user_state }
+          | Internal_state.Discontinuity_error counter ->
+            let%lwt user_state = trigger_event user_state (Error_discontinuity counter) in
+            reconnect ~wait:None { internal_state = Internal_state.create (); user_state }
+          | exn -> exn_ exn)
+    in
+    match action with
+    | Forward state -> (event_loop [@tailcall]) login connection recv state
+    | x -> Lwt.return x
+
+  let connect (Login.{ token; _ } as login) state =
+    let%lwt gateway = Rest.Gateway.bot ~token in
+    let uri =
+      begin
+        match Uri.scheme gateway.url with
+        | None
+         |Some "wss" ->
+          Uri.with_scheme gateway.url (Some "https")
+        | Some "ws" -> Uri.with_scheme gateway.url (Some "http")
+        | Some x -> failwithf "Invalid scheme in WS connect: %s" x ()
+      end
+      |> Fn.flip Uri.add_query_params [ "v", [ "8" ]; "encoding", [ "json" ] ]
+    in
+
+    let%lwt state =
+      let%lwt user_state = trigger_event state.user_state (Before_connecting gateway) in
+      Lwt.return { state with user_state }
+    in
+    let%lwt recv, send, ic, oc =
+      let%lwt endp = Resolver_lwt.resolve_uri ~uri Resolver_lwt_unix.system in
+      let ctx = Conduit_lwt_unix.default_ctx in
+      let%lwt client = Conduit_lwt_unix.endp_to_client ~ctx endp in
+      Ws.with_connection ~ctx client uri
+    in
+
+    let cancel_p, cancel = Lwt.wait () in
+    let cancelable_recv cancel_p recv () = Lwt.pick [ Lwt.protected cancel_p; recv () ] in
+    let send_timeout send frame = Lwt_unix.with_timeout 1.0 (fun () -> send frame) in
+
+    let connection = { ic; oc; send = send_timeout send; cancel } in
+
+    shutdown := Some (make_shutdown (send_timeout send));
+    let%lwt action = event_loop login connection (cancelable_recv cancel_p recv) state in
+    Lwt.return (action, connection)
+
+  let rec connection_loop login previous_state =
+    let%lwt state =
+      let state = Option.value previous_state ~default:(blank_state ()) in
+      match%lwt connect login state with
+      | Forward state, _ -> Lwt.return_some state
+      | Reconnect (wait, state), connection ->
+        let%lwt () = close_connection connection Reconnecting in
+        let%lwt () = Option.value_map wait ~default:Lwt.return_unit ~f:Lwt_unix.sleep in
+        Lwt.return_some state
+      | Exn Exit, connection ->
+        let%lwt () = close_connection connection Final in
+        Lwt.return_none
+      | Exn exn, connection ->
+        let%lwt () =
+          Backtrace.get ()
+          |> Backtrace.to_string_list
+          |> [%sexp_of: string list]
+          |> Sexp.to_string
+          |> Lwt_io.printlf "!!! %s"
+        in
+        let%lwt () = close_connection connection (Exception exn) in
+        let%lwt () = Bot.on_exn exn in
+        let%lwt () = Lwt_unix.sleep 5.0 in
+        (* Reset the user state to avoid an infinite crash loop *)
+        Lwt.return_some (blank_state ())
+    in
+    match state with
+    | Some _ as state -> (connection_loop [@tailcall]) login state
+    | None -> Lwt.return_unit
+
+  let start login = connection_loop login None
 end

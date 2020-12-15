@@ -34,5 +34,7 @@ depends: [
 
   "websocket"
   "websocket-lwt-unix"
+
+  "zarith"
 ]
 build: ["dune" "build" "-p" name "-j" jobs]

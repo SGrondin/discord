@@ -20,7 +20,7 @@ let reconnect ~wait state = Lwt.return (R_Reconnect (wait, state))
 type send = Websocket.Frame.t -> unit Lwt.t
 
 let send_response send message =
-  let content = Protocol.Send.to_yojson message |> Yojson.Safe.to_string in
+  let content = Data.Payload.to_yojson message |> Yojson.Safe.to_string in
   Websocket.Frame.create ~opcode:Text ~content () |> send
 
 let latch_identify = Latch.(create ~cooldown:(Time.sec 5L))
@@ -30,17 +30,19 @@ let identify Login.{ token; activity; status; afk; intents } send =
   {
     token;
     properties = { os = "UNIX"; browser = Rest.Call.name; device = Rest.Call.name };
-    compress = false;
-    presence = { since = None; activities = Some [ activity ]; status; afk };
-    guild_subscriptions = false;
+    compress = None;
+    large_threshold = None;
+    shard = None;
+    presence = Some { since = None; activities = Some [ activity ]; status; afk };
+    guild_subscriptions = None;
     intents;
   }
-  |> Commands.Identify.to_message
+  |> Commands.Identify.to_payload
   |> send_response send
 
 let resume Login.{ token; _ } send internal_state session_id =
   { token; session_id; seq = Internal_state.seq internal_state }
-  |> Commands.Resume.to_message
+  |> Commands.Resume.to_payload
   |> send_response send
 
 let handle_message login ~send ~cancel ({ internal_state; user_state } as state) = function
@@ -56,7 +58,9 @@ let handle_message login ~send ~cancel ({ internal_state; user_state } as state)
   let internal_state = Internal_state.received_hello heartbeat_loop internal_state in
   forward { internal_state; user_state }
 | { raw = { op = Heartbeat; _ }; _ } ->
-  let%lwt () = Commands.Heartbeat_ACK.to_message |> send_response send in
+  let%lwt () =
+    Data.Payload.{ op = Opcode.Heartbeat_ACK; t = None; s = None; d = `Null } |> send_response send
+  in
   forward state
 | { raw = { op = Heartbeat_ACK; _ }; _ } ->
   Internal_state.received_ack internal_state;
@@ -78,6 +82,6 @@ let handle_message login ~send ~cancel ({ internal_state; user_state } as state)
  |{ raw = { op = Resume; _ } as x; _ }
  |{ raw = { op = Request_guild_members; _ } as x; _ } ->
   failwithf "Unexpected opcode: %s. Please report this bug."
-    ([%sexp_of: Protocol.Recv.t] x |> Sexp.to_string)
+    ([%sexp_of: Data.Payload.t] x |> Sexp.to_string)
     ()
 | _ -> forward state
