@@ -1,16 +1,18 @@
 open! Core_kernel
 
 type t = {
+  network_timeout: float;
   token: string;
   intents: Commands.Identify.Intents.t;
   activity: Data.Activity.t;
   status: Data.Presence_update.Status.t;
   afk: bool;
 }
-[@@deriving sexp]
+[@@deriving sexp, compare, equal, yojson]
 
-let create ~token ~intents ?(activity_name = "Bot things") ?(activity_type = Data.Activity.Type.Game)
-   ?(status = Data.Presence_update.Status.Online) ?(afk = false) () =
+let create ?(network_timeout = 1.0) ~token ~intents ?(activity_name = "Bot things")
+   ?(activity_type = Data.Activity.Type.Game) ?(status = Data.Presence_update.Status.Online)
+   ?(afk = false) () =
   let activity =
     Data.Activity.
       {
@@ -34,4 +36,4 @@ let create ~token ~intents ?(activity_name = "Bot things") ?(activity_type = Dat
         flags = None;
       }
   in
-  { token; intents; activity; status; afk }
+  { network_timeout; token; intents; activity; status; afk }
