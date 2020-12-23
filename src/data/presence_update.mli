@@ -16,18 +16,24 @@ end
 
 module Client_status : sig
   type t = {
-    desktop: Status.t option; [@default None]
-    mobile: Status.t option; [@default None]
-    web: Status.t option; [@default None]
+    desktop: Status.t option;
+    mobile: Status.t option;
+    web: Status.t option;
   }
   [@@deriving fields]
 
   include Shared.S_Object with type t := t
 end
 
+module User_id : sig
+  type t = { id: Snowflake.t } [@@deriving fields] [@@unboxed]
+
+  include Shared.S_Object with type t := t
+end
+
 type t = {
-  user: User.t;
-  guild_id: Snowflake.t;
+  user: User_id.t;
+  guild_id: Snowflake.t option;
   status: Status.t;
   activities: Activity.t list;
   client_status: Client_status.t;

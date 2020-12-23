@@ -28,10 +28,14 @@ module Client_status = struct
   [@@deriving sexp, compare, equal, fields, yojson { strict = false }]
 end
 
+module User_id = struct
+  type t = { id: Snowflake.t } [@@deriving sexp, compare, equal, fields, yojson { strict = false }]
+end
+
 module Self = struct
   type t = {
-    user: User.t;
-    guild_id: Snowflake.t;
+    user: User_id.t;
+    guild_id: Snowflake.t option; [@default None]
     status: Status.t;
     activities: Activity.t list;
     client_status: Client_status.t;
