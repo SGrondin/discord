@@ -22,7 +22,7 @@ type send = Websocket.Frame.t -> unit Lwt.t
 val handle_message :
   Login.t ->
   send:send ->
-  cancel:Websocket.Frame.t Lwt.u ->
+  cancel:Websocket.Frame.t Lwt.t * Websocket.Frame.t Lwt.u ->
   'a state ->
   Message.t ->
   'a router_action Lwt.t

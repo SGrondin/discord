@@ -19,10 +19,11 @@ type heartbeat = {
 type heartbeat_loop = {
   interval: int;
   respond: Data.Payload.t -> unit Lwt.t;
+  cancel_p: Websocket.Frame.t Lwt.t;
   cancel: Websocket.Frame.t Lwt.u;
 }
 
-let rec loop heartbeat ({ respond; cancel; interval } as heartbeat_loop) =
+let rec loop heartbeat ({ respond; cancel_p; cancel; interval } as heartbeat_loop) =
   let%lwt () = Lwt_unix.sleep (interval // 1000) in
   if heartbeat.until
   then Lwt.return_unit
@@ -37,7 +38,7 @@ let rec loop heartbeat ({ respond; cancel; interval } as heartbeat_loop) =
             respond @@ Commands.Heartbeat.to_payload heartbeat.seq
           end)
         (fun exn ->
-          Lwt.wakeup_later_exn cancel exn;
+          if Lwt.is_sleeping cancel_p then Lwt.wakeup_later_exn cancel exn else raise exn;
           Lwt.return_unit)
     in
     (loop [@tailcall]) heartbeat heartbeat_loop

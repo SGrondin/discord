@@ -28,7 +28,7 @@ type event =
 [@@deriving sexp]
 
 exception
-  Parsing_error of {
+  API_error of {
     data: string;
     message: string;
     exn: Exn.t;
@@ -40,7 +40,7 @@ type connection = {
   ic: Lwt_io.input_channel;
   oc: Lwt_io.output_channel;
   send: Websocket.Frame.t -> unit Lwt.t;
-  cancel: Websocket.Frame.t Lwt.u;
+  cancel: Websocket.Frame.t Lwt.t * Websocket.Frame.t Lwt.u;
 }
 
 type 'a action =
@@ -93,7 +93,7 @@ end = struct
         | Exit -> Exn.reraise Exit (Source_code_position.to_string [%here])
         | exn -> Bot.on_exn exn >|= fun () -> user_state)
 
-  let close_connection { network_timeout; ic; oc; send; cancel = _ } close =
+  let close_connection { network_timeout; ic; oc; send; _ } close =
     let code = code_of_close close in
     let%lwt () = Bot.on_closing_connection close in
     let%lwt () =
@@ -120,7 +120,7 @@ end = struct
       let raw = Yojson.Safe.from_string content |> Data.Payload.of_yojson |> Result.ok_or_failwith in
       let message =
         try Message.parse raw with
-        | exn -> raise (Parsing_error { data = content; message = Exn.to_string exn; exn })
+        | exn -> raise (API_error { data = content; message = Exn.to_string exn; exn })
       in
       let%lwt user_state = trigger_event user_state (Before_action message) in
       Internal_state.received_seq raw.s internal_state;
@@ -201,12 +201,15 @@ end = struct
     in
 
     let cancel_p, cancel = Lwt.wait () in
+
     let cancelable_recv cancel_p recv () = Lwt.pick [ Lwt.protected cancel_p; recv () ] in
     let send_timeout network_timeout send frame =
       Lwt_unix.with_timeout network_timeout (fun () -> send frame)
     in
 
-    let connection = { network_timeout; ic; oc; send = send_timeout network_timeout send; cancel } in
+    let connection =
+      { network_timeout; ic; oc; send = send_timeout network_timeout send; cancel = cancel_p, cancel }
+    in
 
     shutdown := Some (make_shutdown connection);
     let%lwt action = event_loop login connection (cancelable_recv cancel_p recv) state in

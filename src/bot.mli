@@ -22,7 +22,7 @@ type event =
 [@@deriving sexp]
 
 exception
-  Parsing_error of {
+  API_error of {
     data: string;
     message: string;
     exn: Exn.t;
