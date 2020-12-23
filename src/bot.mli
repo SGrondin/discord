@@ -6,8 +6,8 @@ type close =
   | Exception    of Exn.t
 
 type event =
-  | Before_action              of Message.t
-  | After_action               of Message.t
+  | Payload                    of Data.Payload.t
+  | Msg                        of Message.t
   | Before_connecting          of Rest.Gateway.t
   | Before_reconnecting
   | Error_connection_closed

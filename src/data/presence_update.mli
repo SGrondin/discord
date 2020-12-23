@@ -25,14 +25,8 @@ module Client_status : sig
   include Shared.S_Object with type t := t
 end
 
-module User_id : sig
-  type t = { id: Snowflake.t } [@@deriving fields] [@@unboxed]
-
-  include Shared.S_Object with type t := t
-end
-
 type t = {
-  user: User_id.t;
+  user_id: Snowflake.t;
   guild_id: Snowflake.t option;
   status: Status.t;
   activities: Activity.t list;

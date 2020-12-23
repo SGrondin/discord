@@ -28,14 +28,19 @@ module Client_status = struct
   [@@deriving sexp, compare, equal, fields, yojson { strict = false }]
 end
 
-module User_id = struct
-  type t = { id: Snowflake.t }
-  [@@deriving sexp, compare, equal, fields, yojson { strict = false }] [@@unboxed]
-end
+let user_id_of_yojson : Yojson.Safe.t -> (Snowflake.t, string) result = function
+| `Assoc ll as json -> (
+  match List.Assoc.find ll ~equal:String.equal "id" with
+  | Some x -> Snowflake.of_yojson x
+  | None -> Shared.invalid json "presence update user id"
+)
+| json -> Shared.invalid json "presence update user id"
+
+let user_id_to_yojson x : Yojson.Safe.t = `Assoc [ "id", Snowflake.to_yojson x ]
 
 module Self = struct
   type t = {
-    user: User_id.t;
+    user_id: Snowflake.t; [@key "user"] [@of_yojson user_id_of_yojson] [@to_yojson user_id_to_yojson]
     guild_id: Snowflake.t option; [@default None]
     status: Status.t;
     activities: Activity.t list;

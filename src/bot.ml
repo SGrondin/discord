@@ -12,8 +12,8 @@ let code_of_close = function
 | Exception _ -> 4001
 
 type event =
-  | Before_action              of Message.t
-  | After_action               of Message.t
+  | Payload                    of Data.Payload.t
+  | Msg                        of Message.t
   | Before_connecting          of Rest.Gateway.t
   | Before_reconnecting
   | Error_connection_closed
@@ -118,15 +118,17 @@ end = struct
     | Frame.{ opcode = Text; content; _ }
      |Frame.{ opcode = Binary; content; _ } -> (
       let raw = Yojson.Safe.from_string content |> Data.Payload.of_yojson |> Result.ok_or_failwith in
+      let%lwt user_state = trigger_event user_state (Payload raw) in
+      Internal_state.received_seq raw.s internal_state;
       let message =
         try Message.parse raw with
         | exn -> raise (API_error { data = content; message = Exn.to_string exn; exn })
       in
-      let%lwt user_state = trigger_event user_state (Before_action message) in
-      Internal_state.received_seq raw.s internal_state;
-      match%lwt Router.handle_message login ~send ~cancel { internal_state; user_state } message with
+      match%lwt
+        Router.handle_message login ~send ~cancel { internal_state; user_state } (raw, message)
+      with
       | R_Forward { internal_state; user_state } ->
-        let%lwt user_state = trigger_event user_state (After_action message) in
+        let%lwt user_state = trigger_event user_state (Msg message) in
         Router.forward { internal_state; user_state }
       | R_Reconnect _ as x -> Lwt.return x
     )

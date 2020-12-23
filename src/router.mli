@@ -24,5 +24,5 @@ val handle_message :
   send:send ->
   cancel:Websocket.Frame.t Lwt.t * Websocket.Frame.t Lwt.u ->
   'a state ->
-  Message.t ->
+  Data.Payload.t * Message.t ->
   'a router_action Lwt.t

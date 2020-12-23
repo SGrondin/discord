@@ -9,11 +9,11 @@ end
 
 type t = {
   guild_id: Snowflake.t;
-  query: string option; [@default None]
+  query: string option;
   limit: int;
-  presences: bool option; [@default None]
-  user_ids: User_ids.t option; [@default None]
-  nonce: string option; [@default None]
+  presences: bool option;
+  user_ids: User_ids.t option;
+  nonce: string option;
 }
 [@@deriving fields]
 

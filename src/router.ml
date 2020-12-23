@@ -47,7 +47,7 @@ let resume Login.{ token; _ } send internal_state session_id =
 
 let handle_message login ~send ~cancel:(cancel_p, cancel) ({ internal_state; user_state } as state) =
   function
-| Message.{ parsed = Hello hello; _ } ->
+| _, Message.Hello hello ->
   let%lwt () =
     match Internal_state.session_id internal_state with
     | Some id -> resume login send internal_state id
@@ -58,30 +58,30 @@ let handle_message login ~send ~cancel:(cancel_p, cancel) ({ internal_state; use
   in
   let internal_state = Internal_state.received_hello heartbeat_loop internal_state in
   forward { internal_state; user_state }
-| { raw = { op = Heartbeat; _ }; _ } ->
+| Data.Payload.{ op = Heartbeat; _ }, _ ->
   let%lwt () =
     Data.Payload.{ op = Opcode.Heartbeat_ACK; t = None; s = None; d = `Null } |> send_response send
   in
   forward state
-| { raw = { op = Heartbeat_ACK; _ }; _ } ->
+| { op = Heartbeat_ACK; _ }, _ ->
   Internal_state.received_ack internal_state;
   forward state
-| { parsed = Invalid_session { resumable }; _ } ->
+| _, Invalid_session { resumable } ->
   if resumable
   then reconnect ~wait:None state
   else begin
     let wait = Some (Random.float_range 1.0 5.0) in
     reconnect ~wait { state with internal_state = Internal_state.create () }
   end
-| { parsed = Ready { session_id; _ }; _ } ->
+| _, Ready { session_id; _ } ->
   let internal_state = Internal_state.received_ready ~session_id internal_state in
   forward { internal_state; user_state }
-| { parsed = Reconnect; _ } -> reconnect ~wait:None state
-| { raw = { op = Identify; _ } as x; _ }
- |{ raw = { op = Presence_update; _ } as x; _ }
- |{ raw = { op = Voice_state_update; _ } as x; _ }
- |{ raw = { op = Resume; _ } as x; _ }
- |{ raw = { op = Request_guild_members; _ } as x; _ } ->
+| _, Reconnect -> reconnect ~wait:None state
+| ({ op = Identify; _ } as x), _
+ |({ op = Presence_update; _ } as x), _
+ |({ op = Voice_state_update; _ } as x), _
+ |({ op = Resume; _ } as x), _
+ |({ op = Request_guild_members; _ } as x), _ ->
   failwithf "Unexpected opcode: %s. Please report this bug."
     ([%sexp_of: Data.Payload.t] x |> Sexp.to_string)
     ()
