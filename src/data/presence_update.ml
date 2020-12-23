@@ -29,7 +29,8 @@ module Client_status = struct
 end
 
 module User_id = struct
-  type t = { id: Snowflake.t } [@@deriving sexp, compare, equal, fields, yojson { strict = false }]
+  type t = { id: Snowflake.t }
+  [@@deriving sexp, compare, equal, fields, yojson { strict = false }] [@@unboxed]
 end
 
 module Self = struct
