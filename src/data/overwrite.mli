@@ -13,7 +13,7 @@ end
 
 type t = {
   id: Snowflake.t;
-  type_: Type.t; [@key "type"]
+  type_: Type.t;
   allow: Permissions.t;
   deny: Permissions.t;
 }

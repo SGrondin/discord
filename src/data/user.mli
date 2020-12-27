@@ -39,13 +39,14 @@ module Premium : sig
 end
 
 type member = {
+  guild_id: Snowflake.t option;
   user: t option;
   nick: string option;
   roles: Snowflake.t list;
   joined_at: Timestamp.t;
   premium_since: Timestamp.t option;
-  deaf: bool;
-  mute: bool;
+  deaf: bool option;
+  mute: bool option;
 }
 
 and t = {

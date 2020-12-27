@@ -31,7 +31,7 @@ module Self = struct
     op: Opcode.t;
     t: string option; [@default None]
     s: int option; [@default None]
-    d: Json.t; [@default `Assoc []]
+    d: Json.t; [@default `Null]
   }
   [@@deriving sexp, compare, equal, fields, yojson { strict = false }]
 end

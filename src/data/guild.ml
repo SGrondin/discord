@@ -307,64 +307,72 @@ let%expect_test "Guild of yojson" =
      (rules_channel_id ()) (joined_at ("2020-12-23 17:44:20.459263Z"))
      (large (false)) (unavailable (false)) (member_count (8)) (voice_states (()))
      (members
-      ((((user
+      ((((guild_id ())
+         (user
           (((id 142634064451600384) (username LokiSooner) (discriminator 5135)
             (avatar (737b91e06e38f326c044e5e96bfd4f6c)) (bot ()) (system ())
             (mfa_enabled ()) (locale ()) (verified ()) (email ()) (flags ())
             (premium_type ()) (public_flags ()) (member ()))))
          (nick (Matt)) (roles ()) (joined_at "2019-08-29 15:48:50.005000Z")
-         (premium_since ()) (deaf false) (mute false))
-        ((user
+         (premium_since ()) (deaf (false)) (mute (false)))
+        ((guild_id ())
+         (user
           (((id 197732912110632961) (username Dhsu) (discriminator 1523)
             (avatar ()) (bot ()) (system ()) (mfa_enabled ()) (locale ())
             (verified ()) (email ()) (flags ()) (premium_type ())
             (public_flags ()) (member ()))))
          (nick ()) (roles ()) (joined_at "2019-08-29 17:44:28.316000Z")
-         (premium_since ()) (deaf false) (mute false))
-        ((user
+         (premium_since ()) (deaf (false)) (mute (false)))
+        ((guild_id ())
+         (user
           (((id 209048672195969025) (username Sidekick) (discriminator 6198)
             (avatar (93b788e6f93c968f0fe25ec4d8c56aa8)) (bot (true)) (system ())
             (mfa_enabled ()) (locale ()) (verified ()) (email ()) (flags ())
             (premium_type ()) (public_flags ((Verified_bot))) (member ()))))
          (nick ()) (roles (690748059885502505))
          (joined_at "2020-03-21 02:17:39.456000Z") (premium_since ())
-         (deaf false) (mute false))
-        ((user
+         (deaf (false)) (mute (false)))
+        ((guild_id ())
+         (user
           (((id 221972732596846592) (username normanpride) (discriminator 9822)
             (avatar ()) (bot ()) (system ()) (mfa_enabled ()) (locale ())
             (verified ()) (email ()) (flags ()) (premium_type ())
             (public_flags ()) (member ()))))
          (nick (Thomas)) (roles ()) (joined_at "2019-08-29 15:40:01.543000Z")
-         (premium_since ()) (deaf false) (mute false))
-        ((user
+         (premium_since ()) (deaf (false)) (mute (false)))
+        ((guild_id ())
+         (user
           (((id 364954358473031680) (username Eloinus) (discriminator 6112)
             (avatar ()) (bot ()) (system ()) (mfa_enabled ()) (locale ())
             (verified ()) (email ()) (flags ()) (premium_type ())
             (public_flags ()) (member ()))))
          (nick ()) (roles ()) (joined_at "2019-08-30 17:49:30.690000Z")
-         (premium_since ()) (deaf false) (mute false))
-        ((user
+         (premium_since ()) (deaf (false)) (mute (false)))
+        ((guild_id ())
+         (user
           (((id 559089584764354667) (username epiccletus) (discriminator 2500)
             (avatar ()) (bot ()) (system ()) (mfa_enabled ()) (locale ())
             (verified ()) (email ()) (flags ()) (premium_type ())
             (public_flags ()) (member ()))))
          (nick ()) (roles ()) (joined_at "2019-09-01 19:46:34.586000Z")
-         (premium_since ()) (deaf false) (mute false))
-        ((user
+         (premium_since ()) (deaf (false)) (mute (false)))
+        ((guild_id ())
+         (user
           (((id 616721445933809727) (username xeerohour) (discriminator 5015)
             (avatar (4c0152e658e84be5e20bf88c48e45d2a)) (bot ()) (system ())
             (mfa_enabled ()) (locale ()) (verified ()) (email ()) (flags ())
             (premium_type ()) (public_flags ()) (member ()))))
          (nick ()) (roles ()) (joined_at "2019-08-29 19:51:57.357000Z")
-         (premium_since ()) (deaf false) (mute false))
-        ((user
+         (premium_since ()) (deaf (false)) (mute (false)))
+        ((guild_id ())
+         (user
           (((id 791358895678423040) (username SparkleJoin) (discriminator 0070)
             (avatar ()) (bot (true)) (system ()) (mfa_enabled ()) (locale ())
             (verified ()) (email ()) (flags ()) (premium_type ())
             (public_flags ()) (member ()))))
          (nick ()) (roles (791361098606444574))
          (joined_at "2020-12-23 17:44:20.459263Z") (premium_since ())
-         (deaf false) (mute false)))))
+         (deaf (false)) (mute (false))))))
      (channels
       ((((id 616658324351352844) (type_ GUILD_CATEGORY) (guild_id ())
          (position (0)) (permission_overwrites (())) (name ("Text Channels"))

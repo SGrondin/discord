@@ -46,13 +46,14 @@ end
 
 module Self = struct
   type member = {
+    guild_id: Snowflake.t option; [@default None]
     user: t option; [@default None]
     nick: string option; [@default None]
     roles: Snowflake.t list;
     joined_at: Timestamp.t;
     premium_since: Timestamp.t option; [@default None]
-    deaf: bool;
-    mute: bool;
+    deaf: bool option; [@default None]
+    mute: bool option; [@default None]
   }
 
   and t = {
@@ -135,6 +136,37 @@ let%expect_test "Member of yojson" =
   |};
   [%expect
     {|
-    ((user ()) (nick ("NOT API SUPPORT")) (roles ())
-     (joined_at "2015-04-26 06:26:56.936000Z") (premium_since ()) (deaf false)
-     (mute false)) |}]
+    ((guild_id ()) (user ()) (nick ("NOT API SUPPORT")) (roles ())
+     (joined_at "2015-04-26 06:26:56.936000Z") (premium_since ()) (deaf (false))
+     (mute (false))) |}];
+  test
+    {|
+{
+  "user": {
+    "username": "Something",
+    "public_flags": 0,
+    "id": "6112291816851098717",
+    "discriminator": "4911",
+    "avatar": null
+  },
+  "roles": [],
+  "premium_since": null,
+  "pending": false,
+  "nick": null,
+  "mute": false,
+  "joined_at": "2020-12-25T20:56:47.466579+00:00",
+  "is_pending": false,
+  "guild_id": "690214057383910292",
+  "deaf": false
+}
+  |};
+  [%expect
+    {|
+    ((guild_id (690214057383910292))
+     (user
+      (((id 6112291816851098717) (username Something) (discriminator 4911)
+        (avatar ()) (bot ()) (system ()) (mfa_enabled ()) (locale ())
+        (verified ()) (email ()) (flags ()) (premium_type ()) (public_flags (()))
+        (member ()))))
+     (nick ()) (roles ()) (joined_at "2020-12-25 20:56:47.466579Z")
+     (premium_since ()) (deaf (false)) (mute (false))) |}]
