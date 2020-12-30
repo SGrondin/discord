@@ -15,8 +15,10 @@ let make_uri ?(uri = base_uri) ll = "api" :: "v8" :: ll |> String.concat ~sep:"/
 
 let latch = Latch.(create ~cooldown:(Time.ms 400L))
 
+type body = JSON of Yojson.Safe.t [@@unboxed]
+
 type _ handler =
-  | JSON : Yojson.Safe.t handler
+  | Unparsed : string handler
   | Ignore : unit handler
   | Parse     : (Yojson.Safe.t -> ('a, string) result) -> 'a handler
   | Parse_exn : (Yojson.Safe.t -> 'a) -> 'a handler
@@ -25,7 +27,7 @@ let run :
    type a.
    headers:Header.t ->
    ?expect:int ->
-   ?body:Body.t ->
+   ?body:body ->
    Code.meth ->
    Uri.t ->
    ?print_body:bool ->
@@ -33,6 +35,13 @@ let run :
    a Lwt.t =
  fun ~headers ?(expect = 200) ?body meth uri ?(print_body = false) handler ->
   let%lwt () = Latch.wait_and_trigger latch in
+  let body, headers =
+    match body with
+    | None as x -> x, headers
+    | Some (JSON x) ->
+      ( Some (Yojson.Safe.to_string x |> Body.of_string),
+        Header.add headers "content-type" "application/json" )
+  in
   let%lwt res, res_body = Client.call ~headers ?body meth uri in
   let status = Response.status res in
   let get_body_str = lazy (Body.to_string res_body) in
@@ -41,7 +50,7 @@ let run :
   | code when code = expect ->
     let handle : a Lwt.t =
       match handler with
-      | JSON -> force get_body_str >|= Yojson.Safe.from_string
+      | Unparsed -> force get_body_str
       | Ignore -> Body.drain_body res_body
       | Parse f -> force get_body_str >|= fun s -> Yojson.Safe.from_string s |> f |> Result.ok_or_failwith
       | Parse_exn f -> force get_body_str >|= fun s -> Yojson.Safe.from_string s |> f

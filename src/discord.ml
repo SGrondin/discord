@@ -2,10 +2,12 @@ open! Core_kernel
 
 module Data = struct
   include Data
-  module Basics = Basics
+
+  module Basics = struct
+    include Basics
+  end
 end
 
-module Events = Events
-module Commands = Commands
 module Bot = Bot
 module Login = Login
+module Rest = Rest

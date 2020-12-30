@@ -2,11 +2,11 @@ open! Core_kernel
 open Data.Payload
 
 type t =
-  | Hello                         of Events.Hello.t
-  | Ready                         of Events.Ready.t
+  | Hello                         of Data.Events.Hello.t
+  | Ready                         of Data.Events.Ready.t
   | Resumed
   | Reconnect
-  | Invalid_session               of Events.Invalid_session.t
+  | Invalid_session               of Data.Events.Invalid_session.t
   | Channel_create                of Data.Channel.t
   | Channel_update                of Data.Channel.t
   | Channel_delete                of Data.Channel.t
@@ -38,6 +38,7 @@ type t =
   | Typing_start                  of Data.Events.Typing_start.t
   | User_update                   of Data.User.t
   | Voice_state_update            of Data.Voice_state.t
+  | Voice_server_update           of Data.Events.Voice_server_update.t
   | Webhook_update                of Data.Events.Webhook_update.t
   | Other
 [@@deriving sexp, variants]
@@ -45,11 +46,11 @@ type t =
 let load d p f = d |> p |> Result.ok_or_failwith |> f
 
 let parse = function
-| { op = Hello; d; _ } -> load d Events.Hello.of_yojson hello
-| { op = Dispatch; t = Some "READY"; s = _; d } -> load d Events.Ready.of_yojson ready
+| { op = Hello; d; _ } -> load d Data.Events.Hello.of_yojson hello
+| { op = Dispatch; t = Some "READY"; s = _; d } -> load d Data.Events.Ready.of_yojson ready
 | { op = Dispatch; t = Some "RESUMED"; s = _; d = _ } -> Resumed
 | { op = Reconnect; _ } -> Reconnect
-| { op = Invalid_session; d; _ } -> load d Events.Invalid_session.of_yojson invalid_session
+| { op = Invalid_session; d; _ } -> load d Data.Events.Invalid_session.of_yojson invalid_session
 | { op = Dispatch; t = Some "CHANNEL_CREATE"; s = _; d } -> load d Data.Channel.of_yojson channel_create
 | { op = Dispatch; t = Some "CHANNEL_UPDATE"; s = _; d } -> load d Data.Channel.of_yojson channel_update
 | { op = Dispatch; t = Some "CHANNEL_DELETE"; s = _; d } -> load d Data.Channel.of_yojson channel_delete
@@ -104,6 +105,8 @@ let parse = function
 | { op = Dispatch; t = Some "USER_UPDATE"; s = _; d } -> load d Data.User.of_yojson user_update
 | { op = Dispatch; t = Some "VOICE_STATE_UPDATE"; s = _; d } ->
   load d Data.Voice_state.of_yojson voice_state_update
+| { op = Dispatch; t = Some "VOICE_SERVER_UPDATE"; s = _; d } ->
+  load d Data.Events.Voice_server_update.of_yojson voice_server_update
 | { op = Dispatch; t = Some "WEBHOOK_UPDATE"; s = _; d } ->
   load d Data.Events.Webhook_update.of_yojson webhook_update
 | _ -> Other

@@ -1,6 +1,31 @@
 open! Core_kernel
 open! Basics
 
+module Hello : sig
+  type t = { heartbeat_interval: int } [@@unboxed] [@@deriving fields]
+
+  include Shared.S_Object with type t := t
+end
+
+module Ready : sig
+  type t = {
+    v: int;
+    user: User.t;
+    guilds: Unavailable_guild.t list;
+    session_id: string;
+    shard: Sharding.t option;
+  }
+  [@@deriving fields]
+
+  include Shared.S_Object with type t := t
+end
+
+module Invalid_session : sig
+  type t = { resumable: bool } [@@unboxed] [@@deriving fields]
+
+  include Shared.S_Object with type t := t
+end
+
 module Channel_pins_update : sig
   type t = {
     guild_id: Snowflake.t option;
@@ -187,6 +212,15 @@ module Webhook_update : sig
   type t = {
     guild_id: Snowflake.t;
     channel_id: Snowflake.t;
+  }
+  [@@deriving sexp, compare, equal, fields, yojson { strict = false }]
+end
+
+module Voice_server_update : sig
+  type t = {
+    token: string;
+    guild_id: Snowflake.t;
+    endpoint: string;
   }
   [@@deriving fields]
 

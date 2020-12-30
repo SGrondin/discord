@@ -1,11 +1,11 @@
 open! Core_kernel
 
 type t =
-  | Hello                         of Events.Hello.t
-  | Ready                         of Events.Ready.t
+  | Hello                         of Data.Events.Hello.t
+  | Ready                         of Data.Events.Ready.t
   | Resumed
   | Reconnect
-  | Invalid_session               of Events.Invalid_session.t
+  | Invalid_session               of Data.Events.Invalid_session.t
   | Channel_create                of Data.Channel.t
   | Channel_update                of Data.Channel.t
   | Channel_delete                of Data.Channel.t
@@ -37,6 +37,7 @@ type t =
   | Typing_start                  of Data.Events.Typing_start.t
   | User_update                   of Data.User.t
   | Voice_state_update            of Data.Voice_state.t
+  | Voice_server_update           of Data.Events.Voice_server_update.t
   | Webhook_update                of Data.Events.Webhook_update.t
   | Other
 [@@deriving sexp]

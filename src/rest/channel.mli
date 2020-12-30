@@ -1,8 +1,27 @@
 open! Core_kernel
+open! Basics
 
-val create_message : token:string -> channel_id:string -> content:string -> 'a Call.handler -> 'a Lwt.t
+val get_channel_message :
+  token:string -> channel_id:Snowflake.t -> message_id:Snowflake.t -> Data.Message.t Lwt.t
 
-val delete_message : token:string -> channel_id:string -> message_id:string -> unit Lwt.t
+val create_message : token:string -> channel_id:Snowflake.t -> content:string -> Data.Message.t Lwt.t
+
+val delete_message : token:string -> channel_id:Snowflake.t -> message_id:Snowflake.t -> unit Lwt.t
+
+val bulk_delete_messages :
+  token:string -> channel_id:Basics.Snowflake.t -> Basics.Snowflake.t list -> unit Lwt.t
 
 val create_reaction :
-  token:string -> channel_id:string -> message_id:string -> emoji:string -> 'a Call.handler -> 'a Lwt.t
+  token:string -> channel_id:Snowflake.t -> message_id:Snowflake.t -> emoji:Reference.emoji -> unit Lwt.t
+
+val get_reactions :
+  token:string ->
+  channel_id:Snowflake.t ->
+  message_id:Snowflake.t ->
+  emoji:Reference.emoji ->
+  Data.User.t list Lwt.t
+
+val delete_all_reactions : token:string -> channel_id:Snowflake.t -> message_id:Snowflake.t -> unit Lwt.t
+
+val delete_all_reactions_for_emoji :
+  token:string -> channel_id:Snowflake.t -> message_id:Snowflake.t -> emoji:Reference.emoji -> unit Lwt.t

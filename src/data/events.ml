@@ -1,6 +1,30 @@
 open! Core_kernel
 open! Basics
 
+module Hello = struct
+  type t = { heartbeat_interval: int }
+  [@@deriving sexp, compare, equal, fields, yojson { strict = false }] [@@unboxed]
+end
+
+module Ready = struct
+  type t = {
+    v: int;
+    user: User.t;
+    guilds: Unavailable_guild.t list;
+    session_id: string;
+    shard: Sharding.t option; [@default None]
+  }
+  [@@deriving sexp, compare, equal, fields, yojson { strict = false }]
+end
+
+module Invalid_session = struct
+  type t = { resumable: bool } [@@deriving sexp, compare, equal, fields] [@@unboxed]
+
+  let of_yojson x = [%of_yojson: bool] x |> Result.map ~f:(fun resumable -> { resumable })
+
+  let to_yojson { resumable } = `Bool resumable [@@deriving sexp, compare, equal]
+end
+
 module Channel_pins_update = struct
   type t = {
     guild_id: Snowflake.t option; [@default None]
@@ -156,6 +180,15 @@ module Webhook_update = struct
   type t = {
     guild_id: Snowflake.t;
     channel_id: Snowflake.t;
+  }
+  [@@deriving sexp, compare, equal, fields, yojson { strict = false }]
+end
+
+module Voice_server_update = struct
+  type t = {
+    token: string;
+    guild_id: Snowflake.t;
+    endpoint: string;
   }
   [@@deriving sexp, compare, equal, fields, yojson { strict = false }]
 end

@@ -9,6 +9,8 @@ let of_yojson = function
 
 let to_yojson x = `String (to_string x)
 
+let of_string = of_string
+
 let to_string = to_string
 
 let timestamp x = (x lsr 22) + 1_420_070_400_000L
