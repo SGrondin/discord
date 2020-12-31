@@ -161,3 +161,41 @@ type t = {
 [@@deriving fields]
 
 include Shared.S_Object with type t := t
+
+module Update : sig
+  type message = t
+
+  type t = {
+    id: Snowflake.t;
+    channel_id: Snowflake.t;
+    guild_id: Snowflake.t option;
+    author: User.t option;
+    member: User.member option;
+    content: string option;
+    timestamp: Timestamp.t option;
+    edited_timestamp: Timestamp.t option;
+    tts: bool option;
+    mention_everyone: bool option;
+    mentions: User.t list option;
+    mention_roles: Snowflake.t list option;
+    mention_channels: Channel_mention.t list option;
+    attachments: Attachment.t list option;
+    embeds: Embed.t list option;
+    reactions: Reaction.t list option;
+    nonce: Nonce.t option;
+    pinned: bool option;
+    webhook_id: Snowflake.t option;
+    type_: Type.t option;
+    activity: Activity.t option;
+    application: Application.t option;
+    message_reference: Reference.t option;
+    flags: Flags.t option;
+    stickers: Sticker.t list option;
+    referenced_message: message option;
+  }
+  [@@deriving fields]
+
+  val of_message : message -> t
+
+  include Shared.S_Object with type t := t
+end
