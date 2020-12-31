@@ -27,7 +27,7 @@ type t =
   | Invite_create                 of Data.Events.Invite_create.t
   | Invite_delete                 of Data.Events.Invite_delete.t
   | Message_create                of Data.Message.t
-  | Message_update                of Data.Message.t
+  | Message_update                of Data.Message.Update.t
   | Message_delete                of Data.Events.Message_delete.t
   | Message_delete_bulk           of Data.Events.Message_delete_bulk.t
   | Message_reaction_add          of Data.Events.Message_reaction_add.t
@@ -85,7 +85,8 @@ let parse = function
 | { op = Dispatch; t = Some "INVITE_DELETE"; s = _; d } ->
   load d Data.Events.Invite_delete.of_yojson invite_delete
 | { op = Dispatch; t = Some "MESSAGE_CREATE"; s = _; d } -> load d Data.Message.of_yojson message_create
-| { op = Dispatch; t = Some "MESSAGE_UPDATE"; s = _; d } -> load d Data.Message.of_yojson message_update
+| { op = Dispatch; t = Some "MESSAGE_UPDATE"; s = _; d } ->
+  load d Data.Message.Update.of_yojson message_update
 | { op = Dispatch; t = Some "MESSAGE_DELETE"; s = _; d } ->
   load d Data.Events.Message_delete.of_yojson message_delete
 | { op = Dispatch; t = Some "MESSAGE_DELETE_BULK"; s = _; d } ->

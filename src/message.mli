@@ -26,7 +26,7 @@ type t =
   | Invite_create                 of Data.Events.Invite_create.t
   | Invite_delete                 of Data.Events.Invite_delete.t
   | Message_create                of Data.Message.t
-  | Message_update                of Data.Message.t
+  | Message_update                of Data.Message.Update.t
   | Message_delete                of Data.Events.Message_delete.t
   | Message_delete_bulk           of Data.Events.Message_delete_bulk.t
   | Message_reaction_add          of Data.Events.Message_reaction_add.t
