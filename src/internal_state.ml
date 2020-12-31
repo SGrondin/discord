@@ -38,7 +38,7 @@ let rec loop heartbeat ({ respond; cancel_p; cancel; interval } as heartbeat_loo
             respond @@ Commands.Heartbeat.to_payload heartbeat.seq
           end)
         (fun exn ->
-          if Lwt.is_sleeping cancel_p then Lwt.wakeup_later_exn cancel exn else raise exn;
+          if Lwt.is_sleeping cancel_p then Lwt.wakeup_later_exn cancel exn;
           Lwt.return_unit)
     in
     (loop [@tailcall]) heartbeat heartbeat_loop

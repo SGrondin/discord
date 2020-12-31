@@ -47,7 +47,7 @@ let resume Login.{ token; _ } send internal_state session_id =
 
 let handle_message login ~send ~cancel:(cancel_p, cancel) ({ internal_state; user_state } as state) =
   function
-| _, Message.Hello hello ->
+| _, Event.Hello hello ->
   let%lwt () =
     match Internal_state.session_id internal_state with
     | Some id -> resume login send internal_state id

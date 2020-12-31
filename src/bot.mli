@@ -7,7 +7,7 @@ type close =
 
 type event =
   | Payload                    of Data.Payload.t
-  | Msg                        of Message.t
+  | Received                   of Event.t
   | Before_connecting          of Rest.Gateway.t
   | Before_reconnecting
   | Error_connection_closed

@@ -8,6 +8,7 @@ module Data = struct
   end
 end
 
+module Event = Event
 module Bot = Bot
 module Login = Login
 module Rest = Rest

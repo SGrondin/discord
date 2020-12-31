@@ -13,7 +13,7 @@ let code_of_close = function
 
 type event =
   | Payload                    of Data.Payload.t
-  | Msg                        of Message.t
+  | Received                   of Event.t
   | Before_connecting          of Rest.Gateway.t
   | Before_reconnecting
   | Error_connection_closed
@@ -121,14 +121,14 @@ end = struct
       let%lwt user_state = trigger_event user_state (Payload raw) in
       Internal_state.received_seq raw.s internal_state;
       let message =
-        try Message.parse raw with
+        try Event.parse raw with
         | exn -> raise (API_error { data = content; message = Exn.to_string exn; exn })
       in
       match%lwt
         Router.handle_message login ~send ~cancel { internal_state; user_state } (raw, message)
       with
       | R_Forward { internal_state; user_state } ->
-        let%lwt user_state = trigger_event user_state (Msg message) in
+        let%lwt user_state = trigger_event user_state (Received message) in
         Router.forward { internal_state; user_state }
       | R_Reconnect _ as x -> Lwt.return x
     )
