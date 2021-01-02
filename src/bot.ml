@@ -115,7 +115,7 @@ end = struct
       Router.reconnect ~wait:None { internal_state; user_state }
     | Frame.{ opcode = Pong; _ } -> Router.forward state
     | Frame.{ opcode = Text; content; _ }
-     |Frame.{ opcode = Binary; content; _ } -> (
+     |Frame.{ opcode = Binary; content; _ } ->
       let raw = Yojson.Safe.from_string content |> Data.Payload.of_yojson |> Result.ok_or_failwith in
       let%lwt user_state = trigger_event user_state (Payload raw) in
       Internal_state.received_seq raw.s internal_state;
@@ -123,12 +123,8 @@ end = struct
         try Event.parse raw with
         | exn -> raise (API_error { data = content; message = Exn.to_string exn; exn })
       in
-      match%lwt Router.handle_message login ~send { internal_state; user_state } (raw, message) with
-      | R_Forward { internal_state; user_state } ->
-        let%lwt user_state = trigger_event user_state (Received message) in
-        Router.forward { internal_state; user_state }
-      | R_Reconnect _ as x -> Lwt.return x
-    )
+      let%lwt user_state = trigger_event user_state (Received message) in
+      Router.handle_message login ~send { internal_state; user_state } (raw, message)
     | frame -> failwithf "Unhandled frame: %s" (Frame.show frame) ()
 
   let rec event_loop login connection recv ({ internal_state; user_state } as state) =
