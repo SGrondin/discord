@@ -55,18 +55,6 @@ let do_exn exn = Lwt.return (Exn exn)
 
 let in_background ~on_exn f = Lwt.async (fun () -> Lwt.catch f on_exn)
 
-let shutdown = ref None
-
-let make_shutdown { send; _ } () =
-  Lwt_main.at_exit (fun () -> code_of_close Final |> Websocket.Frame.close |> send);
-  raise Exit
-
-let () =
-  let handler _ = Option.call () ~f:!shutdown in
-  let _sigint = Lwt_unix.on_signal Sys.sigint handler in
-  let _sigterm = Lwt_unix.on_signal Sys.sigterm handler in
-  ()
-
 module type S = sig
   type state
 
@@ -80,7 +68,7 @@ module type S = sig
 end
 
 module Make (Bot : S) : sig
-  val start : Login.t -> unit Lwt.t
+  val start : Login.t -> unit Lwt.t * (unit -> unit)
 end = struct
   let blank_state () = { internal_state = Internal_state.create (); user_state = Bot.create () }
 
@@ -100,7 +88,9 @@ end = struct
       then Lwt.return_unit
       else Lwt.catch (fun () -> send @@ Websocket.Frame.close code) (fun _exn -> Lwt.return_unit)
     in
-    Lwt_unix.with_timeout network_timeout (fun () -> Lwt.join [ Lwt_io.close ic; Lwt_io.close oc ])
+    Lwt_unix.with_timeout network_timeout (fun () ->
+        let%lwt () = Lwt_io.close oc in
+        Lwt_io.close ic)
 
   let handle_frame login send ({ internal_state; user_state } as state) frame =
     let open Websocket in
@@ -172,7 +162,7 @@ end = struct
     | Forward state -> (event_loop [@tailcall]) login connection recv state
     | x -> Lwt.return x
 
-  let connect (Login.{ network_timeout; token; _ } as login) state =
+  let connect shutdown (Login.{ network_timeout; token; _ } as login) state =
     let%lwt gateway = Rest.Gateway.bot ~token in
     let uri =
       begin
@@ -203,14 +193,15 @@ end = struct
 
     let connection = { network_timeout; ic; oc; send = send_timeout network_timeout send } in
 
-    shutdown := Some (make_shutdown connection);
-    let%lwt action = event_loop login connection recv state in
+    let cancelable_recv recv shutdown () = Lwt.choose [ recv (); shutdown ] in
+
+    let%lwt action = event_loop login connection (cancelable_recv recv shutdown) state in
     Lwt.return (action, connection)
 
-  let rec connection_loop login previous_state =
+  let rec connection_loop shutdown login previous_state =
     let%lwt state =
       let state = Option.value previous_state ~default:(blank_state ()) in
-      match%lwt connect login state with
+      match%lwt connect shutdown login state with
       | Forward state, _ -> Lwt.return_some state
       | Reconnect (wait, state), connection ->
         let%lwt () = close_connection connection Reconnecting in
@@ -227,8 +218,11 @@ end = struct
         Lwt.return_some (blank_state ())
     in
     match state with
-    | Some _ as state -> (connection_loop [@tailcall]) login state
+    | Some _ as state -> (connection_loop [@tailcall]) shutdown login state
     | None -> Lwt.return_unit
 
-  let start login = connection_loop login None
+  let start login =
+    let p, w = Lwt.wait () in
+    let cancel () = Lwt.wakeup_later_exn w Exit in
+    connection_loop p login None, cancel
 end

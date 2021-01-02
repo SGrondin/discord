@@ -44,5 +44,5 @@ module type S = sig
 end
 
 module Make : functor (Bot : S) -> sig
-  val start : Login.t -> unit Lwt.t
+  val start : Login.t -> unit Lwt.t * (unit -> unit)
 end
