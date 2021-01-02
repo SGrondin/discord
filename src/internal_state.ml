@@ -13,9 +13,9 @@ type heartbeat = {
   mutable seq: int option;
   mutable ack: int;
   mutable count: int;
-  mutable discontinuity_error: counter option;
+  mutable heartbeat_error: Exn.t option; [@sexp.opaque]
 }
-[@@deriving sexp]
+[@@deriving sexp_of]
 
 type heartbeat_loop = {
   interval: int;
@@ -24,25 +24,31 @@ type heartbeat_loop = {
 
 let rec loop heartbeat ({ respond; interval } as heartbeat_loop) =
   let%lwt () = Lwt_unix.sleep (interval // 1000) in
-  if heartbeat.until || Option.is_some heartbeat.discontinuity_error
+  if heartbeat.until || Option.is_some heartbeat.heartbeat_error
   then Lwt.return_unit
   else begin
     let%lwt () =
-      if heartbeat.ack < heartbeat.count
-      then begin
-        heartbeat.discontinuity_error <- Some { count = heartbeat.count; ack = heartbeat.ack };
-        Lwt.return_unit
-      end
-      else begin
-        heartbeat.count <- heartbeat.count + 1;
-        respond @@ Commands.Heartbeat.to_payload heartbeat.seq
-      end
+      Lwt.catch
+        (fun () ->
+          if heartbeat.ack < heartbeat.count
+          then begin
+            heartbeat.heartbeat_error <-
+              Some (Discontinuity_error { count = heartbeat.count; ack = heartbeat.ack });
+            Lwt.return_unit
+          end
+          else begin
+            heartbeat.count <- heartbeat.count + 1;
+            respond @@ Commands.Heartbeat.to_payload heartbeat.seq
+          end)
+        (fun exn ->
+          heartbeat.heartbeat_error <- Some exn;
+          Lwt.return_unit)
     in
     (loop [@tailcall]) heartbeat heartbeat_loop
   end
 
 let start_heartbeat heartbeat_loop ~seq =
-  let heartbeat = { until = false; seq; ack = 0; count = 0; discontinuity_error = None } in
+  let heartbeat = { until = false; seq; ack = 0; count = 0; heartbeat_error = None } in
   Lwt.async (fun () -> loop heartbeat heartbeat_loop);
   heartbeat
 
@@ -55,7 +61,7 @@ type t =
       heartbeat: heartbeat;
       session_id: string;
     }
-[@@deriving sexp]
+[@@deriving sexp_of]
 
 let create () = Starting None
 
@@ -88,14 +94,14 @@ let received_ack = function
  |Connected { heartbeat; _ } ->
   heartbeat.ack <- heartbeat.ack + 1
 
-let raise_if_discontinuity_error = function
+let raise_if_heartbeat_error = function
 | Starting _
- |After_hello { discontinuity_error = None; _ }
- |Connected { heartbeat = { discontinuity_error = None; _ }; _ } ->
+ |After_hello { heartbeat_error = None; _ }
+ |Connected { heartbeat = { heartbeat_error = None; _ }; _ } ->
   ()
-| After_hello { discontinuity_error = Some counter; _ }
- |Connected { heartbeat = { discontinuity_error = Some counter; _ }; _ } ->
-  raise (Discontinuity_error counter)
+| After_hello { heartbeat_error = Some exn; _ }
+ |Connected { heartbeat = { heartbeat_error = Some exn; _ }; _ } ->
+  raise exn
 
 let terminate = function
 | Starting _ -> ()

@@ -135,7 +135,7 @@ end = struct
     let%lwt action =
       Lwt.catch
         (fun () ->
-          Internal_state.raise_if_discontinuity_error internal_state;
+          Internal_state.raise_if_heartbeat_error internal_state;
           let%lwt frame = recv () in
           match%lwt handle_frame login connection.send state frame with
           | R_Forward state -> do_forward state
@@ -147,7 +147,8 @@ end = struct
           Internal_state.terminate internal_state;
           let open Core in
           match exn with
-          | End_of_file ->
+          | Lwt_io.Channel_closed _
+           |End_of_file ->
             let%lwt user_state = trigger_event user_state Error_connection_closed in
             do_reconnect ~wait:None { internal_state; user_state }
           | Internal_state.Discontinuity_error counter ->

@@ -25,7 +25,7 @@ val received_seq : int option -> t -> unit
 
 val received_ack : t -> unit
 
-val raise_if_discontinuity_error : t -> unit
+val raise_if_heartbeat_error : t -> unit
 
 val terminate : t -> unit
 
