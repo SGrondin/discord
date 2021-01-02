@@ -40,7 +40,6 @@ type connection = {
   ic: Lwt_io.input_channel;
   oc: Lwt_io.output_channel;
   send: Websocket.Frame.t -> unit Lwt.t;
-  cancel: Websocket.Frame.t Lwt.t * Websocket.Frame.t Lwt.u;
 }
 
 type 'a action =
@@ -103,7 +102,7 @@ end = struct
     in
     Lwt_unix.with_timeout network_timeout (fun () -> Lwt.join [ Lwt_io.close ic; Lwt_io.close oc ])
 
-  let handle_frame login cancel send ({ internal_state; user_state } as state) frame =
+  let handle_frame login send ({ internal_state; user_state } as state) frame =
     let open Websocket in
     match frame with
     | Frame.{ opcode = Ping; _ } ->
@@ -124,9 +123,7 @@ end = struct
         try Event.parse raw with
         | exn -> raise (API_error { data = content; message = Exn.to_string exn; exn })
       in
-      match%lwt
-        Router.handle_message login ~send ~cancel { internal_state; user_state } (raw, message)
-      with
+      match%lwt Router.handle_message login ~send { internal_state; user_state } (raw, message) with
       | R_Forward { internal_state; user_state } ->
         let%lwt user_state = trigger_event user_state (Received message) in
         Router.forward { internal_state; user_state }
@@ -138,8 +135,9 @@ end = struct
     let%lwt action =
       Lwt.catch
         (fun () ->
+          Internal_state.raise_if_discontinuity_error internal_state;
           let%lwt frame = recv () in
-          match%lwt handle_frame login connection.cancel connection.send state frame with
+          match%lwt handle_frame login connection.send state frame with
           | R_Forward state -> do_forward state
           | R_Reconnect (wait, { internal_state; user_state }) ->
             Internal_state.terminate internal_state;
@@ -202,19 +200,14 @@ end = struct
       Ws.with_connection ~ctx client uri
     in
 
-    let cancel_p, cancel = Lwt.wait () in
-
-    let cancelable_recv cancel_p recv () = Lwt.pick [ Lwt.protected cancel_p; recv () ] in
     let send_timeout network_timeout send frame =
       Lwt_unix.with_timeout network_timeout (fun () -> send frame)
     in
 
-    let connection =
-      { network_timeout; ic; oc; send = send_timeout network_timeout send; cancel = cancel_p, cancel }
-    in
+    let connection = { network_timeout; ic; oc; send = send_timeout network_timeout send } in
 
     shutdown := Some (make_shutdown connection);
-    let%lwt action = event_loop login connection (cancelable_recv cancel_p recv) state in
+    let%lwt action = event_loop login connection recv state in
     Lwt.return (action, connection)
 
   let rec connection_loop login previous_state =

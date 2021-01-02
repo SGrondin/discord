@@ -45,8 +45,7 @@ let resume Login.{ token; _ } send internal_state session_id =
   |> Commands.Resume.to_payload
   |> send_response send
 
-let handle_message login ~send ~cancel:(cancel_p, cancel) ({ internal_state; user_state } as state) =
-  function
+let handle_message login ~send ({ internal_state; user_state } as state) = function
 | _, Event.Hello hello ->
   let%lwt () =
     match Internal_state.session_id internal_state with
@@ -54,7 +53,7 @@ let handle_message login ~send ~cancel:(cancel_p, cancel) ({ internal_state; use
     | None -> identify login send
   in
   let heartbeat_loop =
-    Internal_state.{ interval = hello.heartbeat_interval; respond = send_response send; cancel_p; cancel }
+    Internal_state.{ interval = hello.heartbeat_interval; respond = send_response send }
   in
   let internal_state = Internal_state.received_hello heartbeat_loop internal_state in
   forward { internal_state; user_state }

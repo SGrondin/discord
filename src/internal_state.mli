@@ -13,8 +13,6 @@ type t
 type heartbeat_loop = {
   interval: int;
   respond: Data.Payload.t -> unit Lwt.t;
-  cancel_p: Websocket.Frame.t Lwt.t;
-  cancel: Websocket.Frame.t Lwt.u;
 }
 
 val create : unit -> t
@@ -26,6 +24,8 @@ val received_ready : session_id:string -> t -> t
 val received_seq : int option -> t -> unit
 
 val received_ack : t -> unit
+
+val raise_if_discontinuity_error : t -> unit
 
 val terminate : t -> unit
 

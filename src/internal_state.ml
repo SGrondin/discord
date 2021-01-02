@@ -13,39 +13,36 @@ type heartbeat = {
   mutable seq: int option;
   mutable ack: int;
   mutable count: int;
+  mutable discontinuity_error: counter option;
 }
 [@@deriving sexp]
 
 type heartbeat_loop = {
   interval: int;
   respond: Data.Payload.t -> unit Lwt.t;
-  cancel_p: Websocket.Frame.t Lwt.t;
-  cancel: Websocket.Frame.t Lwt.u;
 }
 
-let rec loop heartbeat ({ respond; cancel_p; cancel; interval } as heartbeat_loop) =
+let rec loop heartbeat ({ respond; interval } as heartbeat_loop) =
   let%lwt () = Lwt_unix.sleep (interval // 1000) in
-  if heartbeat.until
+  if heartbeat.until || Option.is_some heartbeat.discontinuity_error
   then Lwt.return_unit
   else begin
     let%lwt () =
-      Lwt.catch
-        (fun () ->
-          if heartbeat.ack < heartbeat.count
-          then raise (Discontinuity_error { count = heartbeat.count; ack = heartbeat.ack })
-          else begin
-            heartbeat.count <- heartbeat.count + 1;
-            respond @@ Commands.Heartbeat.to_payload heartbeat.seq
-          end)
-        (fun exn ->
-          if Lwt.is_sleeping cancel_p then Lwt.wakeup_later_exn cancel exn;
-          Lwt.return_unit)
+      if heartbeat.ack < heartbeat.count
+      then begin
+        heartbeat.discontinuity_error <- Some { count = heartbeat.count; ack = heartbeat.ack };
+        Lwt.return_unit
+      end
+      else begin
+        heartbeat.count <- heartbeat.count + 1;
+        respond @@ Commands.Heartbeat.to_payload heartbeat.seq
+      end
     in
     (loop [@tailcall]) heartbeat heartbeat_loop
   end
 
 let start_heartbeat heartbeat_loop ~seq =
-  let heartbeat = { until = false; seq; ack = 0; count = 0 } in
+  let heartbeat = { until = false; seq; ack = 0; count = 0; discontinuity_error = None } in
   Lwt.async (fun () -> loop heartbeat heartbeat_loop);
   heartbeat
 
@@ -90,6 +87,15 @@ let received_ack = function
 | After_hello heartbeat
  |Connected { heartbeat; _ } ->
   heartbeat.ack <- heartbeat.ack + 1
+
+let raise_if_discontinuity_error = function
+| Starting _
+ |After_hello { discontinuity_error = None; _ }
+ |Connected { heartbeat = { discontinuity_error = None; _ }; _ } ->
+  ()
+| After_hello { discontinuity_error = Some counter; _ }
+ |Connected { heartbeat = { discontinuity_error = Some counter; _ }; _ } ->
+  raise (Discontinuity_error counter)
 
 let terminate = function
 | Starting _ -> ()
