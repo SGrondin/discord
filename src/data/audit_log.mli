@@ -15,7 +15,7 @@ end
 
 module Partial_role : sig
   type t = {
-    id: Int64.t;
+    id: Snowflake.t;
     name: string;
   }
   [@@deriving fields]
@@ -123,7 +123,7 @@ module Change : sig
       | Enable_emoticons              of bool
       | Expire_behavior               of Integration.Expire_behavior.t
       | Expire_grace_period           of Duration.Days.t
-      | Unknown                       of Json.t
+      | Unknown                       of (string * Json.t)
 
     include Shared.S_Base with type t := t
   end
@@ -131,7 +131,6 @@ module Change : sig
   type t = {
     old_value: Value.t option;
     new_value: Value.t option;
-    key: string;
   }
   [@@deriving fields]
 
@@ -139,7 +138,7 @@ module Change : sig
 end
 
 module Entry : sig
-  module Options : sig
+  module Info : sig
     type t = {
       delete_member_days: string option;
       members_removed: string option;
@@ -161,7 +160,7 @@ module Entry : sig
     user_id: Snowflake.t;
     id: Snowflake.t;
     action_type: Event.t;
-    options: Options.t option;
+    options: Info.t option;
     reason: string option;
   }
   [@@deriving fields]

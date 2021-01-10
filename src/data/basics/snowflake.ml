@@ -5,6 +5,8 @@ type t = Int64.t [@@deriving sexp, compare, equal]
 
 let of_yojson = function
 | `String s -> Ok (of_string s)
+| `Intlit s -> Ok (of_string s)
+| `Int x -> Ok (of_int x)
 | x -> Error (sprintf "Invalid snowflake: %s" (Yojson.Safe.to_string x))
 
 let to_yojson x = `String (to_string x)

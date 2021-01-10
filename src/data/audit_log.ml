@@ -13,7 +13,7 @@ end
 
 module Partial_role = struct
   type t = {
-    id: Int64.t;
+    id: Snowflake.t;
     name: string;
   }
   [@@deriving sexp, compare, equal, fields, yojson { strict = false }]
@@ -156,113 +156,121 @@ module Change = struct
     end
 
     type t =
-      | Name                          of string
-      | Icon_hash                     of Image_hash.t
-      | Splash_hash                   of Image_hash.t
-      | Owner_id                      of Snowflake.t
-      | Region                        of string
-      | Afk_channel_id                of Snowflake.t
-      | Afk_timeout                   of Duration.Seconds.t
-      | Mfa_level                     of Guild.MFA_level.t
-      | Verification_level            of Guild.Verification_level.t
+      | Name                          of string [@name "name"]
+      | Icon_hash                     of Image_hash.t [@name "icon_hash"]
+      | Splash_hash                   of Image_hash.t [@name "splash_hash"]
+      | Owner_id                      of Snowflake.t [@name "owner_id"]
+      | Region                        of string [@name "region"]
+      | Afk_channel_id                of Snowflake.t [@name "afk_channel_id"]
+      | Afk_timeout                   of Duration.Seconds.t [@name "afk_timeout"]
+      | Mfa_level                     of Guild.MFA_level.t [@name "mfa_level"]
+      | Verification_level            of Guild.Verification_level.t [@name "verification_level"]
       | Explicit_content_filter       of Guild.Explicit_content_filter_level.t
+          [@name "explicit_content_filter"]
       | Default_message_notifications of Guild.Default_message_notification_level.t
-      | Vanity_url_code               of Url.t
+          [@name "default_message_notifications"]
+      | Vanity_url_code               of Url.t [@name "vanity_url_code"]
       | ADD_ROLE                      of Partial_role.t list [@name "$add"]
       | REMOVE_ROLE                   of Partial_role.t list [@name "$remove"]
-      | Prune_delete_days             of Duration.Days.t
-      | Widget_enabled                of bool
-      | Widget_channel_id             of Snowflake.t
-      | System_channel_id             of Snowflake.t
-      | Position                      of int
-      | Topic                         of string
-      | Bitrate                       of int
-      | Permission_overwrites         of Overwrite.t list
-      | Nsfw                          of bool
-      | Application_id                of Snowflake.t
-      | Rate_limit_per_user           of int
-      | Permissions                   of Permissions.t
-      | Color                         of int
-      | Hoist                         of bool
-      | Mentionable                   of bool
-      | Allow                         of Permissions.t
-      | Deny                          of Permissions.t
-      | Code                          of string
-      | Channel_id                    of Snowflake.t
-      | Inviter_id                    of Snowflake.t
-      | Max_uses                      of int
-      | Uses                          of int
-      | Max_age                       of Duration.Seconds.t
-      | Temporary                     of bool
-      | Deaf                          of bool
-      | Mute                          of bool
-      | Nick                          of string
-      | Avatar_hash                   of Image_hash.t
-      | Id                            of Snowflake.t
-      | Type                          of Type.t
-      | Enable_emoticons              of bool
-      | Expire_behavior               of Integration.Expire_behavior.t
-      | Expire_grace_period           of Duration.Days.t
-      | Unknown                       of Json.t
+      | Prune_delete_days             of Duration.Days.t [@name "prune_delete_days"]
+      | Widget_enabled                of bool [@name "widget_enabled"]
+      | Widget_channel_id             of Snowflake.t [@name "widget_channel_id"]
+      | System_channel_id             of Snowflake.t [@name "system_channel_id"]
+      | Position                      of int [@name "position"]
+      | Topic                         of string [@name "topic"]
+      | Bitrate                       of int [@name "bitrate"]
+      | Permission_overwrites         of Overwrite.t list [@name "permission_overwrites"]
+      | Nsfw                          of bool [@name "nsfw"]
+      | Application_id                of Snowflake.t [@name "application_id"]
+      | Rate_limit_per_user           of int [@name "rate_limit_per_user"]
+      | Permissions                   of Permissions.t [@name "permissions"]
+      | Color                         of int [@name "color"]
+      | Hoist                         of bool [@name "hoist"]
+      | Mentionable                   of bool [@name "mentionable"]
+      | Allow                         of Permissions.t [@name "allow"]
+      | Deny                          of Permissions.t [@name "deny"]
+      | Code                          of string [@name "code"]
+      | Channel_id                    of Snowflake.t [@name "channel_id"]
+      | Inviter_id                    of Snowflake.t [@name "inviter_id"]
+      | Max_uses                      of int [@name "max_uses"]
+      | Uses                          of int [@name "uses"]
+      | Max_age                       of Duration.Seconds.t [@name "max_age"]
+      | Temporary                     of bool [@name "temporary"]
+      | Deaf                          of bool [@name "deaf"]
+      | Mute                          of bool [@name "mute"]
+      | Nick                          of string [@name "nick"]
+      | Avatar_hash                   of Image_hash.t [@name "avatar_hash"]
+      | Id                            of Snowflake.t [@name "id"]
+      | Type                          of Type.t [@name "type"]
+      | Enable_emoticons              of bool [@name "enable_emoticons"]
+      | Expire_behavior               of Integration.Expire_behavior.t [@name "expire_behavior"]
+      | Expire_grace_period           of Duration.Days.t [@name "expire_grace_period"]
+      | Unknown                       of (string * Json.t)
     [@@deriving sexp, compare, equal, variants, yojson { strict = false }]
-
-    let keys =
-      List.fold Variants.descriptions ~init:String.Set.empty ~f:(fun acc (k, _v) ->
-          String.Set.add acc (String.lowercase k))
   end
 
   module Unparsed = struct
     type t = {
-      old_value: Yojson.Safe.t;
-      new_value: Yojson.Safe.t;
+      old_value: Yojson.Safe.t option; [@default None]
+      new_value: Yojson.Safe.t option; [@default None]
       key: string;
     }
-    [@@deriving yojson { strict = false }]
+    [@@deriving of_yojson { strict = false }]
+
+    let to_yojson { old_value; new_value; key } =
+      `Assoc
+        [
+          "old_value", Option.value ~default:`Null old_value;
+          "new_value", Option.value ~default:`Null new_value;
+          "key", `String key;
+        ]
   end
 
   type t = {
     old_value: Value.t option; [@default None]
     new_value: Value.t option; [@default None]
-    key: string;
   }
   [@@deriving sexp, compare, equal, fields]
 
   let of_yojson json =
     let open Result.Let_syntax in
     match%bind Unparsed.of_yojson json with
-    | { key; old_value; new_value } when not @@ String.Set.mem Value.keys key ->
-      let make = function
-        | `Null -> None
-        | v -> Some (Value.Unknown v)
+    | { key; _ } as unparsed ->
+      let make v =
+        Option.map v ~f:(fun j ->
+            match [%of_yojson: Value.t] (`List [ `String key; j ]) with
+            | Ok x -> x
+            | Error _ -> Unknown (key, j))
       in
-      Ok { old_value = make old_value; new_value = make new_value; key }
-    | { key = k; old_value; new_value } ->
-      let key = String.capitalize k in
-      let make k v : Yojson.Safe.t = `List [ `String k; v ] in
-      let ov = [%of_yojson: Value.t option] (make key old_value) in
-      let nv = [%of_yojson: Value.t option] (make key new_value) in
-      let%map old_value = ov
-      and new_value = nv in
-      Fields.create ~old_value ~new_value ~key
+      Ok { old_value = make unparsed.old_value; new_value = make unparsed.new_value }
 
-  let to_yojson { old_value; new_value; key } =
-    let make v =
-      Option.value_map v ~default:`Null ~f:(fun x -> Value.to_yojson x |> Yojson.Safe.Util.index 1)
+  let to_yojson ({ old_value; new_value } as change) : Yojson.Safe.t =
+    let make = function
+      | Value.Unknown (key, j) -> `String key, j
+      | v -> (
+        match Value.to_yojson v with
+        | `List [ k; v ] -> k, v
+        | _ ->
+          failwithf "Serialization error for Audit Log Change: %s"
+            ([%sexp_of: t] change |> Sexp.to_string_hum)
+            ()
+      )
     in
+    let ov = Option.map ~f:make old_value in
+    let nv = Option.map ~f:make new_value in
     [%to_yojson: Unparsed.t]
       {
-        old_value = make old_value;
-        new_value = make new_value;
+        old_value = Option.map ~f:snd ov;
+        new_value = Option.map ~f:snd nv;
         key =
-          Option.first_some old_value new_value
-          |> Option.value_map ~default:key ~f:(function
-               | Unknown _v -> key
-               | x -> Value.Variants.to_name x |> String.lowercase);
+          Option.first_some ov nv
+          |> Option.bind ~f:(fun (k, _v) -> Yojson.Safe.Util.to_string_option k)
+          |> Option.value_exn ~message:"Audit Log Change cannot have both old_value and new_value be None";
       }
 end
 
 module Entry = struct
-  module Options = struct
+  module Info = struct
     type t = {
       delete_member_days: string option; [@default None]
       members_removed: string option; [@default None]
@@ -282,7 +290,7 @@ module Entry = struct
     user_id: Snowflake.t;
     id: Snowflake.t;
     action_type: Event.t;
-    options: Options.t option; [@default None]
+    options: Info.t option; [@default None]
     reason: string option; [@default None]
   }
   [@@deriving sexp, compare, equal, fields, yojson { strict = false }]
@@ -335,7 +343,6 @@ let%expect_test "Change to yojson" =
     {
       old_value = Some (Change.Value.Verification_level Guild.Verification_level.LOW);
       new_value = Some (Change.Value.Verification_level Guild.Verification_level.HIGH);
-      key = "verification_level";
     };
   [%expect {|
     { "old_value": 1, "new_value": 3, "key": "verification_level" } |}];
@@ -343,31 +350,54 @@ let%expect_test "Change to yojson" =
     {
       old_value = Some (Change.Value.Type (Change.Value.Type.Channel Channel.Type.GUILD_VOICE));
       new_value = Some (Change.Value.Type (Change.Value.Type.Other "Something"));
-      key = "type";
     };
   [%expect {| { "old_value": 2, "new_value": "Something", "key": "type" } |}];
-  test { old_value = None; new_value = Some (Change.Value.Name "Hello world"); key = "name" };
+  test { old_value = None; new_value = Some (Change.Value.Name "Hello world") };
   [%expect {| { "old_value": null, "new_value": "Hello world", "key": "name" } |}];
-  test { old_value = None; new_value = None; key = "type" };
-  [%expect {| { "old_value": null, "new_value": null, "key": "type" } |}];
-  test { old_value = Some (Change.Value.Unknown (`Bool true)); new_value = None; key = "new_key" };
-  [%expect {| { "old_value": true, "new_value": null, "key": "new_key" } |}]
+  (match Result.try_with (fun () -> test { old_value = None; new_value = None }) with
+  | Error exn -> print_endline (Exn.to_string exn)
+  | Ok () -> ());
+  [%expect {| "Audit Log Change cannot have both old_value and new_value be None" |}];
+  test { old_value = Some (Change.Value.Unknown ("new_key", `Bool true)); new_value = None };
+  [%expect {| { "old_value": true, "new_value": null, "key": "new_key" } |}];
+  test
+    {
+      old_value =
+        Some
+          (Change.Value.ADD_ROLE
+             [
+               { id = Snowflake.of_string "123"; name = "foo" };
+               { id = Snowflake.of_string "456"; name = "bar" };
+             ]);
+      new_value = None;
+    };
+  [%expect
+    {|
+    {
+      "old_value": [
+        { "id": "123", "name": "foo" },
+        { "id": "456", "name": "bar" }
+      ],
+      "new_value": null,
+      "key": "$add"
+    } |}]
 
 let%expect_test "Change of yojson" =
   let test = Shared.test (module Change) in
   test {|
-{ "old_value": 1, "new_value": 3, "key": "verification_level" }
+{ "old_value":1, "new_value": 3, "key": "verification_level" }
   |};
   [%expect
     {|
-      ((old_value ((Verification_level LOW)))
-       (new_value ((Verification_level HIGH))) (key Verification_level)) |}];
+         ((old_value ((Verification_level LOW)))
+          (new_value ((Verification_level HIGH)))) |}];
   test {|
-{ "old_value": 1, "new_value": 3, "key": "VERIFICATION_LEVEL" }
-  |};
-  [%expect {|
-    ((old_value ((Unknown 1))) (new_value ((Unknown 3)))
-     (key VERIFICATION_LEVEL)) |}];
+   { "old_value": 1, "new_value": 3, "key": "VERIFICATION_LEVEL" }
+     |};
+  [%expect
+    {|
+       ((old_value ((Unknown (VERIFICATION_LEVEL 1))))
+        (new_value ((Unknown (VERIFICATION_LEVEL 3))))) |}];
   {|{ "old_value": 1, "new_value": 3, "key": "VERIFICATION_LEVEL" }|}
   |> Yojson.Safe.from_string
   |> [%of_yojson: Change.t]
@@ -375,4 +405,82 @@ let%expect_test "Change of yojson" =
   |> [%to_yojson: Change.t]
   |> Yojson.Safe.to_string
   |> print_endline;
-  [%expect {| {"old_value":1,"new_value":3,"key":"VERIFICATION_LEVEL"} |}]
+  [%expect {| {"old_value":1,"new_value":3,"key":"VERIFICATION_LEVEL"} |}];
+  test
+    {|
+    {
+      "key": "$remove",
+      "new_value": [
+        {
+          "name": "Monster",
+          "id": "586559029070004236"
+        }
+      ]
+    }
+      |};
+  [%expect
+    {|
+    ((old_value ())
+     (new_value ((REMOVE_ROLE (((id 586559029070004236) (name Monster))))))) |}]
+
+let%expect_test "Change value type of yojson" =
+  let test = Shared.test (module Change.Value.Type) in
+  test {|2|};
+  [%expect {| (Channel GUILD_VOICE) |}]
+
+let%expect_test "Audit log of yojson" =
+  let test = Shared.test (module Self) in
+  test
+    {|
+{
+  "audit_log_entries": [
+    {
+      "id": "795305393085612053",
+      "user_id": "254065912326520833",
+      "target_id": "305693040004300800",
+      "action_type": 25,
+      "changes": [
+        {
+          "key": "$remove",
+          "new_value": [
+            {
+              "name": "Monster",
+              "id": "586559029070004236"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "id": "305693040004300800",
+      "username": "\ud835\ude73\ud835\ude8a\ud835\ude97\ud835\ude92\ud835\ude8e\ud835\ude95",
+      "avatar": "54ac4f6b667f50d41e06add4e2e034a7",
+      "discriminator": "1388",
+      "public_flags": 0
+    }
+  ],
+  "integrations": [],
+  "webhooks": []
+}
+  |};
+  [%expect
+    {|
+    ((webhooks ())
+     (users
+      (((id 305693040004300800)
+        (username
+         "\240\157\153\179\240\157\154\138\240\157\154\151\240\157\154\146\240\157\154\142\240\157\154\149")
+        (discriminator 1388) (avatar (54ac4f6b667f50d41e06add4e2e034a7))
+        (bot ()) (system ()) (mfa_enabled ()) (locale ()) (verified ())
+        (email ()) (flags ()) (premium_type ()) (public_flags (())) (member ()))))
+     (audit_log_entries
+      (((target_id (305693040004300800))
+        (changes
+         ((((old_value ())
+            (new_value
+             ((REMOVE_ROLE (((id 586559029070004236) (name Monster))))))))))
+        (user_id 254065912326520833) (id 795305393085612053)
+        (action_type MEMBER_ROLE_UPDATE) (options ()) (reason ()))))
+     (integrations ())) |}]
