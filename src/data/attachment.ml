@@ -8,8 +8,8 @@ module Self = struct
     size: int;
     url: Url.t;
     proxy_url: Url.t;
-    height: int option;
-    width: int option;
+    height: int option; [@default None]
+    width: int option; [@default None]
   }
   [@@deriving sexp, compare, equal, fields, yojson { strict = false }]
 end

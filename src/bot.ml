@@ -109,12 +109,14 @@ end = struct
       let raw = Yojson.Safe.from_string content |> Data.Payload.of_yojson |> Result.ok_or_failwith in
       let%lwt user_state = trigger_event user_state (Payload raw) in
       Internal_state.received_seq raw.s internal_state;
-      let message =
-        try Event.parse raw with
-        | exn -> raise (API_error { data = content; message = Exn.to_string exn; exn })
-      in
-      let%lwt user_state = trigger_event user_state (Received message) in
-      Router.handle_message login ~send { internal_state; user_state } (raw, message)
+      Lwt.try_bind
+        (fun () -> Lwt.return (Event.parse raw))
+        (fun message ->
+          let%lwt user_state = trigger_event user_state (Received message) in
+          Router.handle_message login ~send { internal_state; user_state } (raw, message))
+        (fun exn ->
+          let%lwt () = Bot.on_exn (API_error { data = content; message = Exn.to_string exn; exn }) in
+          Router.forward { internal_state; user_state })
     | frame -> failwithf "Unhandled frame: %s" (Frame.show frame) ()
 
   let rec event_loop login connection recv ({ internal_state; user_state } as state) =

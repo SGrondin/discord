@@ -358,9 +358,95 @@ let%expect_test "Message of yojson" =
        (message_reference
         (((message_id (306588351130107906)) (channel_id (278325129692446722))
           (guild_id (278325129692446720)))))
-       (flags ((IS_CROSSPOST))) (stickers ()) (referenced_message ())) |}]
+       (flags ((IS_CROSSPOST))) (stickers ()) (referenced_message ())) |}];
+  test
+    {|
+{
+  "type": 0,
+  "tts": false,
+  "timestamp": "2021-01-11T11:41:26.605000+00:00",
+  "referenced_message": null,
+  "pinned": false,
+  "mentions": [],
+  "mention_roles": [],
+  "mention_everyone": false,
+  "member": {
+    "roles": [
+      "449007431759167518",
+      "449008216609783822",
+      "563589569212186625",
+      "567128869673631744",
+      "586352111483355156",
+      "586559029070004236",
+      "587341234498961408",
+      "634945334728196142",
+      "634946098057707550",
+      "641130304618364928",
+      "646418110269620226"
+    ],
+    "mute": false,
+    "joined_at": "2019-04-05T00:53:28.395000+00:00",
+    "hoisted_role": "449007431759167518",
+    "deaf": false
+  },
+  "id": "798154604067815434",
+  "flags": 0,
+  "embeds": [],
+  "edited_timestamp": null,
+  "content": "",
+  "channel_id": "588958704691314688",
+  "author": {
+    "username": "Weskerlicious",
+    "public_flags": 256,
+    "id": "232330360589910026",
+    "discriminator": "7925",
+    "avatar": "ded6142134ea127cbb3baf1561685c6e"
+  },
+  "attachments": [
+    {
+      "url": "https://cdn.discordapp.com/attachments/588958704691314688/798154603316248576/just_fuck_me_up_darkmelodies27_hella-lugosi.pdf",
+      "size": 4673272,
+      "proxy_url": "https://media.discordapp.net/attachments/588958704691314688/798154603316248576/just_fuck_me_up_darkmelodies27_hella-lugosi.pdf",
+      "id": "798154603316248576",
+      "filename": "just_fuck_me_up_darkmelodies27_hella-lugosi.pdf"
+    }
+  ],
+  "guild_id": "448249875805634572"
+}
+  |};
+  [%expect {|
+    ((id 798154604067815434) (channel_id 588958704691314688)
+     (guild_id (448249875805634572))
+     (author
+      ((id 232330360589910026) (username Weskerlicious) (discriminator 7925)
+       (avatar (ded6142134ea127cbb3baf1561685c6e)) (bot ()) (system ())
+       (mfa_enabled ()) (locale ()) (verified ()) (email ()) (flags ())
+       (premium_type ()) (public_flags ((House_balance))) (member ())))
+     (member
+      (((guild_id ()) (user ()) (nick ())
+        (roles
+         (449007431759167518 449008216609783822 563589569212186625
+          567128869673631744 586352111483355156 586559029070004236
+          587341234498961408 634945334728196142 634946098057707550
+          641130304618364928 646418110269620226))
+        (joined_at "2019-04-05 00:53:28.395000Z") (premium_since ())
+        (deaf (false)) (mute (false)))))
+     (content "") (timestamp "2021-01-11 11:41:26.605000Z") (edited_timestamp ())
+     (tts false) (mention_everyone false) (mentions ()) (mention_roles ())
+     (mention_channels ())
+     (attachments
+      (((id 798154603316248576)
+        (filename just_fuck_me_up_darkmelodies27_hella-lugosi.pdf) (size 4673272)
+        (url
+         https://cdn.discordapp.com/attachments/588958704691314688/798154603316248576/just_fuck_me_up_darkmelodies27_hella-lugosi.pdf)
+        (proxy_url
+         https://media.discordapp.net/attachments/588958704691314688/798154603316248576/just_fuck_me_up_darkmelodies27_hella-lugosi.pdf)
+        (height ()) (width ()))))
+     (embeds ()) (reactions ()) (nonce ()) (pinned false) (webhook_id ())
+     (type_ DEFAULT) (activity ()) (application ()) (message_reference ())
+     (flags (())) (stickers ()) (referenced_message ())) |}]
 
-let%expect_test "Message of yojson" =
+let%expect_test "Message update of yojson" =
   let test = Shared.test (module Update) in
   test
     {|
@@ -382,7 +468,8 @@ let%expect_test "Message of yojson" =
   "guild_id": "448249875805634572"
 }
   |};
-  [%expect {|
+  [%expect
+    {|
     ((id 793839338689003540) (channel_id 641119368704557079)
      (guild_id (448249875805634572)) (author ()) (member ()) (content ())
      (timestamp ()) (edited_timestamp ()) (tts ()) (mention_everyone ())
