@@ -8,6 +8,7 @@ module Create_message = struct
     content: string;
     nonce: string;
     tts: bool;
+    embed: Data.Embed.t option; [@default None]
   }
   [@@deriving sexp, fields, to_yojson]
 end
@@ -23,10 +24,11 @@ let get_channel_message ~token ~channel_id ~message_id =
   let uri = Call.make_uri [ "channels"; ss channel_id; "messages"; ss message_id ] in
   Call.run ~headers `GET uri (Parse [%of_yojson: Data.Message.t])
 
-let create_message ~token ~channel_id ~content =
+let create_message ~token ~channel_id ~content ?embed () =
   let body =
     Call.JSON
-      (Create_message.to_yojson { content; nonce = Latch.Time.get () |> Int64.to_string; tts = false })
+      (Create_message.to_yojson
+         { content; nonce = Latch.Time.get () |> Int64.to_string; tts = false; embed })
   in
   let headers = Header.add (Call.headers ~token) "content-type" "application/json" in
   let uri = Call.make_uri [ "channels"; ss channel_id; "messages" ] in
@@ -81,3 +83,8 @@ let delete_all_reactions_for_emoji ~token ~channel_id ~message_id ~emoji =
       [ "channels"; ss channel_id; "messages"; ss message_id; "reactions"; Basics.Reference.to_url emoji ]
   in
   Call.run ~headers ~expect:204 `DELETE uri Ignore
+
+let trigger_typing_indicator ~token ~channel_id =
+  let headers = Call.headers ~token in
+  let uri = Call.make_uri [ "channels"; ss channel_id; "typing" ] in
+  Call.run ~headers ~expect:204 `POST uri Ignore

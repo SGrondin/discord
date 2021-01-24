@@ -414,7 +414,8 @@ let%expect_test "Message of yojson" =
   "guild_id": "448249875805634572"
 }
   |};
-  [%expect {|
+  [%expect
+    {|
     ((id 798154604067815434) (channel_id 588958704691314688)
      (guild_id (448249875805634572))
      (author

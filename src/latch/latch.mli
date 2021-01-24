@@ -7,6 +7,10 @@ val create : cooldown:Int64.t -> t
 module Time : sig
   val get : unit -> Int64.t
 
+  val day : Int64.t -> Int64.t
+
+  val hour : Int64.t -> Int64.t
+
   val min : Int64.t -> Int64.t
 
   val sec : Int64.t -> Int64.t

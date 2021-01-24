@@ -12,6 +12,10 @@ let create ~cooldown = { previous = 0L; cooldown; mutex = Lwt_mutex.create () }
 module Time = struct
   let get () = Time_now.nanoseconds_since_unix_epoch () |> Int63.to_int64
 
+  let day x = x * 24L * 60L * 60L * 1_000_000_000L
+
+  let hour x = x * 60L * 60L * 1_000_000_000L
+
   let min x = x * 60L * 1_000_000_000L
 
   let sec x = x * 1_000_000_000L
