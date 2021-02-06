@@ -2,7 +2,7 @@ open! Core_kernel
 
 include module type of Yojson.Safe
 
-module Map : Map_intf.S with type Key.t := Yojson.Safe.t
+module Map : Map.S with type Key.t := Yojson.Safe.t
 
 val sexp_of_t : [%sexp_of: t]
 

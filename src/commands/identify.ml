@@ -101,11 +101,11 @@ let%expect_test "Identify of yojson" =
 let%expect_test "Intent bitfield to int" =
   let test x = [%to_yojson: Intents.t] x |> Yojson.Safe.to_string |> print_endline in
 
-  test [ GUILD_MEMBERS; GUILD_MESSAGES ];
+  test (Intents.Set.of_list [ GUILD_MEMBERS; GUILD_MESSAGES ]);
   [%expect {| 514 |}];
-  test [ GUILD_MEMBERS; GUILD_MESSAGES; GUILD_MEMBERS ];
+  test (Intents.Set.of_list [ GUILD_MEMBERS; GUILD_MESSAGES; GUILD_MEMBERS ]);
   [%expect {| 514 |}];
-  test [ GUILD_MEMBERS; GUILD_MESSAGES; GUILD_VOICE_STATES ];
+  test (Intents.Set.of_list [ GUILD_MEMBERS; GUILD_MESSAGES; GUILD_VOICE_STATES ]);
   [%expect {| 642 |}]
 
 let%expect_test "Login bitfield of int" =

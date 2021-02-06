@@ -46,13 +46,13 @@ include Self
 
 let%expect_test "Permissions of yojson" =
   let test j = [%to_yojson: t] j |> sprintf !"%{Yojson.Safe}" |> print_endline in
-  test [ SEND_MESSAGES; ADD_REACTIONS ];
+  test (Set.of_list [ SEND_MESSAGES; ADD_REACTIONS ]);
   [%expect {| 2112 |}]
 
 let%expect_test "Permissions checking" =
   let test j p =
     let ps = Yojson.Safe.from_string j |> of_yojson |> Result.ok_or_failwith in
-    List.mem ~equal:Perm.equal ps p |> printf "%b"
+    Set.mem ps p |> printf "%b"
   in
   test {|"2112"|} SEND_MESSAGES;
   [%expect {| true |}];
@@ -62,6 +62,6 @@ let%expect_test "Permissions checking" =
   [%expect {| false |}]
 
 let%expect_test "Permissions to list" =
-  let test z = of_yojson z |> Result.ok_or_failwith |> sprintf !"%{sexp: Perm.t list}" |> print_endline in
+  let test z = of_yojson z |> Result.ok_or_failwith |> sprintf !"%{sexp: t}" |> print_endline in
   test (`Intlit "2112");
   [%expect {| (ADD_REACTIONS SEND_MESSAGES) |}]

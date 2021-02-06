@@ -25,7 +25,7 @@ module Flag : sig
   include Shared.S_Bitfield with type t := t
 end
 
-module Flags : Bitfield.S with type t = Flag.t list
+module Flags : Bitfield.S with type elt := Flag.t
 
 module Premium : sig
   type t =
