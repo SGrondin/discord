@@ -1,23 +1,19 @@
 open! Core_kernel
 
 module type S = sig
-  type elt
+  include Set.S
 
-  module Set : Set.S with type Elt.t := elt
+  val to_yojson : t -> Yojson.Safe.t
 
-  type t = Set.t [@@deriving sexp, compare, equal, yojson]
+  val of_yojson : Yojson.Safe.t -> (t, string) result
 end
 
-module Make (M : Shared.S_Bitfield) : S with type elt := M.t = struct
-  module Set = Set.Make (M)
-
-  type elt = M.t [@@warning "-34"]
-
-  type t = Set.t [@@deriving sexp, compare, equal]
+module Make (M : Shared.S_Bitfield) : S with type Elt.t := M.t = struct
+  module MSet = Set.Make (M)
 
   let to_z ll =
     let open Z in
-    Set.fold ll ~init:zero ~f:(fun acc x -> logor acc (one lsl M.to_enum x))
+    MSet.fold ll ~init:zero ~f:(fun acc x -> logor acc (one lsl M.to_enum x))
 
   let of_z x =
     let open Z in
@@ -27,12 +23,12 @@ module Make (M : Shared.S_Bitfield) : S with type elt := M.t = struct
       | i ->
         let acc =
           if (one lsl i) land x > zero
-          then Set.add acc (M.of_enum i |> Option.value_exn ~here:M.here)
+          then MSet.add acc (M.of_enum i |> Option.value_exn ~here:M.here)
           else acc
         in
         (loop [@tailcall]) x acc Int.(i - 1)
     in
-    (loop [@tailcall]) x Set.empty M.max
+    (loop [@tailcall]) x MSet.empty M.max
 
   let to_yojson ll : Yojson.Safe.t =
     let z = to_z ll in
@@ -47,4 +43,6 @@ module Make (M : Shared.S_Bitfield) : S with type elt := M.t = struct
       (sprintf
          !"Impossible to parse JSON '%{Yojson.Safe}' into a bitfield at %{Source_code_position}"
          json M.here)
+
+  include MSet
 end

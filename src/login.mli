@@ -13,7 +13,7 @@ type t = {
 val create :
   ?network_timeout:float ->
   token:string ->
-  intents:Commands.Identify.Intents.t ->
+  intents:Commands.Identify.Intent.t list ->
   ?activity_name:string ->
   ?activity_type:Data.Activity.Type.t ->
   ?status:Data.Presence_update.Status.t ->

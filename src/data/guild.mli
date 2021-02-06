@@ -65,7 +65,7 @@ module System_channel_flag : sig
   include Shared.S_Bitfield with type t := t
 end
 
-module System_channel_flags : Bitfield.S with type elt := System_channel_flag.t
+module System_channel_flags : Bitfield.S with type Elt.t := System_channel_flag.t
 
 module Feature : sig
   type t =

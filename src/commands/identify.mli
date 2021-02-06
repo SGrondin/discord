@@ -33,7 +33,7 @@ module Intent : sig
   include Shared.S_Bitfield with type t := t
 end
 
-module Intents : Bitfield.S with type elt := Intent.t
+module Intents : Bitfield.S with type Elt.t := Intent.t
 
 type t = {
   token: string;

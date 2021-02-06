@@ -1,11 +1,11 @@
 open! Core_kernel
 
 module type S = sig
-  type elt
+  include Set.S
 
-  module Set : Set.S with type Elt.t := elt
+  val to_yojson : t -> Yojson.Safe.t
 
-  type t = Set.t [@@deriving sexp, compare, equal, yojson]
+  val of_yojson : Yojson.Safe.t -> (t, string) result
 end
 
-module Make : functor (M : Shared.S_Bitfield) -> S with type elt := M.t
+module Make : functor (M : Shared.S_Bitfield) -> S with type Elt.t := M.t

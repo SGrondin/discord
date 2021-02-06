@@ -36,4 +36,4 @@ let create ?(network_timeout = 1.0) ~token ~intents ?(activity_name = "Bot thing
         flags = None;
       }
   in
-  { network_timeout; token; intents; activity; status; afk }
+  { network_timeout; token; intents = Commands.Identify.Intents.of_list intents; activity; status; afk }

@@ -46,7 +46,7 @@ include Self
 
 let%expect_test "Permissions of yojson" =
   let test j = [%to_yojson: t] j |> sprintf !"%{Yojson.Safe}" |> print_endline in
-  test (Set.of_list [ SEND_MESSAGES; ADD_REACTIONS ]);
+  test (of_list [ SEND_MESSAGES; ADD_REACTIONS ]);
   [%expect {| 2112 |}]
 
 let%expect_test "Permissions checking" =

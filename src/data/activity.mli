@@ -90,7 +90,7 @@ module Flag : sig
   include Shared.S_Bitfield with type t := t
 end
 
-module Flags : Bitfield.S with type elt := Flag.t
+module Flags : Bitfield.S with type Elt.t := Flag.t
 
 type t = {
   id: string option;
