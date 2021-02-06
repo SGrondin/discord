@@ -8,8 +8,6 @@ module type Make_S = sig
   module Variants : sig
     val to_rank : t -> int
 
-    (* val to_name : t -> string *)
-
     val descriptions : (string * int) list
   end
 end

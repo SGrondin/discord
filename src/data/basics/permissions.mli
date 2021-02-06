@@ -37,13 +37,3 @@ module Perm : sig
 end
 
 type t [@@deriving sexp, compare, equal, yojson]
-
-val check : t -> Perm.t -> bool
-
-val to_list : t -> Perm.t list
-
-val of_list : Perm.t list -> t
-
-val to_string : t -> string
-
-val of_string : string -> t

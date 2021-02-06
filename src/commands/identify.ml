@@ -99,7 +99,7 @@ let%expect_test "Identify of yojson" =
      (guild_subscriptions (false)) (intents (GUILDS GUILD_MEMBERS GUILD_BANS))) |}]
 
 let%expect_test "Intent bitfield to int" =
-  let test x = Intents.to_int x |> printf "%d" in
+  let test x = [%to_yojson: Intents.t] x |> Yojson.Safe.to_string |> print_endline in
 
   test [ GUILD_MEMBERS; GUILD_MESSAGES ];
   [%expect {| 514 |}];
@@ -109,8 +109,10 @@ let%expect_test "Intent bitfield to int" =
   [%expect {| 642 |}]
 
 let%expect_test "Login bitfield of int" =
-  let test x = Intents.of_int x |> sprintf !"%{sexp: Intents.t}" |> print_endline in
-  test 514;
+  let test x =
+    [%of_yojson: Intents.t] x |> Result.ok_or_failwith |> sprintf !"%{sexp: Intents.t}" |> print_endline
+  in
+  test (`Int 514);
   [%expect {| (GUILD_MEMBERS GUILD_MESSAGES) |}];
-  test 642;
+  test (`Int 642);
   [%expect {| (GUILD_MEMBERS GUILD_VOICE_STATES GUILD_MESSAGES) |}]

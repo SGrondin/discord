@@ -253,7 +253,8 @@ let%expect_test "Guild of yojson" =
      Channels\",\"id\":\"616658324351352848\"},{\"user_limit\":0,\"type\":2,\"position\":0,\"permission_overwrites\":[],\"parent_id\":\"616658324351352848\",\"name\":\"General\",\"id\":\"616658324351352850\",\"bitrate\":64000},{\"type\":0,\"topic\":null,\"rate_limit_per_user\":0,\"position\":1,\"permission_overwrites\":[{\"type\":0,\"id\":\"690748059885502505\",\"deny\":\"3072\",\"allow\":\"0\"}],\"parent_id\":\"616658324351352844\",\"name\":\"expanse\",\"last_message_id\":\"780912633338527775\",\"id\":\"624642843318943754\"},{\"type\":0,\"topic\":null,\"rate_limit_per_user\":0,\"position\":2,\"permission_overwrites\":[{\"type\":0,\"id\":\"616658324351352842\",\"deny\":\"0\",\"allow\":\"0\"},{\"type\":0,\"id\":\"690748059885502505\",\"deny\":\"3072\",\"allow\":\"0\"}],\"parent_id\":\"616658324351352844\",\"name\":\"tainted-grail\",\"last_message_id\":\"785630253740457995\",\"id\":\"651883842986180620\"},{\"type\":0,\"topic\":null,\"rate_limit_per_user\":0,\"position\":3,\"permission_overwrites\":[{\"type\":1,\"id\":\"209048672195969025\",\"deny\":\"0\",\"allow\":\"3072\"}],\"parent_id\":\"616658324351352844\",\"name\":\"roll-it\",\"last_pin_timestamp\":\"2020-03-21T02:20:39.984000+00:00\",\"last_message_id\":\"690999462507708477\",\"id\":\"690746389600272434\"},{\"type\":0,\"topic\":null,\"rate_limit_per_user\":0,\"position\":4,\"permission_overwrites\":[{\"type\":0,\"id\":\"616658324351352842\",\"deny\":\"1024\",\"allow\":\"0\"},{\"type\":0,\"id\":\"791361098606444574\",\"deny\":\"0\",\"allow\":\"1024\"}],\"parent_id\":\"616658324351352844\",\"nsfw\":false,\"name\":\"bot-channel\",\"last_message_id\":null,\"id\":\"791361427729809448\"}],\"member_count\":8,\"splash\":null,\"max_members\":100000,\"threads\":[],\"presences\":[{\"user\":{\"id\":\"209048672195969025\"},\"status\":\"online\",\"client_status\":{\"web\":\"online\"},\"activities\":[]},{\"user\":{\"id\":\"221972732596846592\"},\"status\":\"online\",\"client_status\":{\"desktop\":\"online\"},\"activities\":[]},{\"user\":{\"id\":\"364954358473031680\"},\"status\":\"idle\",\"client_status\":{\"desktop\":\"idle\"},\"activities\":[]},{\"user\":{\"id\":\"616721445933809727\"},\"status\":\"online\",\"client_status\":{\"desktop\":\"online\"},\"activities\":[]},{\"user\":{\"id\":\"791358895678423040\"},\"status\":\"online\",\"client_status\":{\"web\":\"online\"},\"activities\":[{\"type\":2,\"name\":\"People \
      Beep \
      Boop\",\"id\":\"ec0b28a579ecb4bd\",\"created_at\":1608747249139}]}],\"id\":\"616658324351352842\",\"region\":\"us-south\",\"mfa_level\":0}";
-  [%expect {|
+  [%expect
+    {|
     ((id 616658324351352842) (name "Tulsa Guys")
      (icon (37b2df6f79f44c0b95f974e6689156b0)) (icon_hash ()) (splash ())
      (discovery_splash ()) (owner ()) (owner_id 221972732596846592)
@@ -263,14 +264,34 @@ let%expect_test "Guild of yojson" =
      (explicit_content_filter DISABLED)
      (roles
       (((id 616658324351352842) (name @everyone) (color 0) (hoist false)
-        (position 0) (permissions 104324673) (managed false) (mentionable false))
+        (position 0)
+        (permissions
+         (CREATE_INSTANT_INVITE ADD_REACTIONS STREAM VIEW_CHANNEL SEND_MESSAGES
+          SEND_TTS_MESSAGES EMBED_LINKS ATTACH_FILES READ_MESSAGE_HISTORY
+          MENTION_EVERYONE USE_EXTERNAL_EMOJIS CONNECT SPEAK USE_VAD
+          CHANGE_NICKNAME))
+        (managed false) (mentionable false))
        ((id 649766035054002188) (name "Server Booster") (color 16023551)
-        (hoist false) (position 3) (permissions 104324673) (managed true)
-        (mentionable false))
+        (hoist false) (position 3)
+        (permissions
+         (CREATE_INSTANT_INVITE ADD_REACTIONS STREAM VIEW_CHANNEL SEND_MESSAGES
+          SEND_TTS_MESSAGES EMBED_LINKS ATTACH_FILES READ_MESSAGE_HISTORY
+          MENTION_EVERYONE USE_EXTERNAL_EMOJIS CONNECT SPEAK USE_VAD
+          CHANGE_NICKNAME))
+        (managed true) (mentionable false))
        ((id 690748059885502505) (name hush) (color 0) (hoist false) (position 2)
-        (permissions 512064) (managed false) (mentionable false))
+        (permissions
+         (ADD_REACTIONS SEND_TTS_MESSAGES EMBED_LINKS ATTACH_FILES
+          READ_MESSAGE_HISTORY MENTION_EVERYONE USE_EXTERNAL_EMOJIS))
+        (managed false) (mentionable false))
        ((id 791361098606444574) (name "bot test") (color 3066993) (hoist false)
-        (position 1) (permissions 104324673) (managed false) (mentionable false))))
+        (position 1)
+        (permissions
+         (CREATE_INSTANT_INVITE ADD_REACTIONS STREAM VIEW_CHANNEL SEND_MESSAGES
+          SEND_TTS_MESSAGES EMBED_LINKS ATTACH_FILES READ_MESSAGE_HISTORY
+          MENTION_EVERYONE USE_EXTERNAL_EMOJIS CONNECT SPEAK USE_VAD
+          CHANGE_NICKNAME))
+        (managed false) (mentionable false))))
      (emojis
       (((id (705819616026427413)) (name (conga_parrot)) (roles (())) (user ())
         (require_colons (true)) (managed (false)) (animated (true))
@@ -381,8 +402,10 @@ let%expect_test "Guild of yojson" =
          (application_id ()) (parent_id ()) (last_pin_timestamp ()))
         ((id 616658324351352846) (type_ GUILD_TEXT) (guild_id ()) (position (0))
          (permission_overwrites
-          ((((id 209048672195969025) (type_ Member) (allow 0) (deny 3072))
-            ((id 690748059885502505) (type_ Role) (allow 0) (deny 3072)))))
+          ((((id 209048672195969025) (type_ Member) (allow ())
+             (deny (VIEW_CHANNEL SEND_MESSAGES)))
+            ((id 690748059885502505) (type_ Role) (allow ())
+             (deny (VIEW_CHANNEL SEND_MESSAGES))))))
          (name (general)) (topic ()) (nsfw ())
          (last_message_id (791365371445510145)) (bitrate ()) (user_limit ())
          (rate_limit_per_user (0s)) (recipients ()) (icon ()) (owner_id ())
@@ -401,7 +424,8 @@ let%expect_test "Guild of yojson" =
          (last_pin_timestamp ()))
         ((id 624642843318943754) (type_ GUILD_TEXT) (guild_id ()) (position (1))
          (permission_overwrites
-          ((((id 690748059885502505) (type_ Role) (allow 0) (deny 3072)))))
+          ((((id 690748059885502505) (type_ Role) (allow ())
+             (deny (VIEW_CHANNEL SEND_MESSAGES))))))
          (name (expanse)) (topic ()) (nsfw ())
          (last_message_id (780912633338527775)) (bitrate ()) (user_limit ())
          (rate_limit_per_user (0s)) (recipients ()) (icon ()) (owner_id ())
@@ -409,8 +433,9 @@ let%expect_test "Guild of yojson" =
          (last_pin_timestamp ()))
         ((id 651883842986180620) (type_ GUILD_TEXT) (guild_id ()) (position (2))
          (permission_overwrites
-          ((((id 616658324351352842) (type_ Role) (allow 0) (deny 0))
-            ((id 690748059885502505) (type_ Role) (allow 0) (deny 3072)))))
+          ((((id 616658324351352842) (type_ Role) (allow ()) (deny ()))
+            ((id 690748059885502505) (type_ Role) (allow ())
+             (deny (VIEW_CHANNEL SEND_MESSAGES))))))
          (name (tainted-grail)) (topic ()) (nsfw ())
          (last_message_id (785630253740457995)) (bitrate ()) (user_limit ())
          (rate_limit_per_user (0s)) (recipients ()) (icon ()) (owner_id ())
@@ -418,7 +443,8 @@ let%expect_test "Guild of yojson" =
          (last_pin_timestamp ()))
         ((id 690746389600272434) (type_ GUILD_TEXT) (guild_id ()) (position (3))
          (permission_overwrites
-          ((((id 209048672195969025) (type_ Member) (allow 3072) (deny 0)))))
+          ((((id 209048672195969025) (type_ Member)
+             (allow (VIEW_CHANNEL SEND_MESSAGES)) (deny ())))))
          (name (roll-it)) (topic ()) (nsfw ())
          (last_message_id (690999462507708477)) (bitrate ()) (user_limit ())
          (rate_limit_per_user (0s)) (recipients ()) (icon ()) (owner_id ())
@@ -426,8 +452,10 @@ let%expect_test "Guild of yojson" =
          (last_pin_timestamp ("2020-03-21 02:20:39.984000Z")))
         ((id 791361427729809448) (type_ GUILD_TEXT) (guild_id ()) (position (4))
          (permission_overwrites
-          ((((id 616658324351352842) (type_ Role) (allow 0) (deny 1024))
-            ((id 791361098606444574) (type_ Role) (allow 1024) (deny 0)))))
+          ((((id 616658324351352842) (type_ Role) (allow ())
+             (deny (VIEW_CHANNEL)))
+            ((id 791361098606444574) (type_ Role) (allow (VIEW_CHANNEL))
+             (deny ())))))
          (name (bot-channel)) (topic ()) (nsfw (false)) (last_message_id ())
          (bitrate ()) (user_limit ()) (rate_limit_per_user (0s)) (recipients ())
          (icon ()) (owner_id ()) (application_id ())

@@ -35,5 +35,11 @@ let%expect_test "Role of yojson" =
   [%expect
     {|
     ((id 41771983423143936) (name "WE DEM BOYZZ!!!!!!") (color 3447003)
-     (hoist true) (position 1) (permissions 66321471) (managed false)
-     (mentionable false)) |}]
+     (hoist true) (position 1)
+     (permissions
+      (CREATE_INSTANT_INVITE KICK_MEMBERS BAN_MEMBERS ADMINISTRATOR
+       MANAGE_CHANNELS MANAGE_GUILD VIEW_CHANNEL SEND_MESSAGES SEND_TTS_MESSAGES
+       MANAGE_MESSAGES EMBED_LINKS ATTACH_FILES READ_MESSAGE_HISTORY
+       MENTION_EVERYONE CONNECT SPEAK MUTE_MEMBERS DEAFEN_MEMBERS MOVE_MEMBERS
+       USE_VAD))
+     (managed false) (mentionable false)) |}]
