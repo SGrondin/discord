@@ -8,10 +8,10 @@ module type S = sig
   val of_int : int -> t
 end
 
-module Make (X : Shared.S_Bitfield) : S with type t = X.t list = struct
-  type t = X.t list [@@deriving sexp, compare, equal]
+module Make (M : Shared.S_Bitfield) : S with type t = M.t list = struct
+  type t = M.t list [@@deriving sexp, compare, equal]
 
-  let to_int ll = List.fold ll ~init:0 ~f:(fun acc x -> acc lor (1 lsl X.to_enum x))
+  let to_int ll = List.fold ll ~init:0 ~f:(fun acc x -> acc lor (1 lsl M.to_enum x))
 
   let of_int x =
     let rec loop ~here ~of_enum x acc = function
@@ -20,7 +20,7 @@ module Make (X : Shared.S_Bitfield) : S with type t = X.t list = struct
         let acc = if (1 lsl i) land x > 0 then (of_enum i |> Option.value_exn ~here) :: acc else acc in
         loop ~here ~of_enum x acc (i - 1)
     in
-    loop ~here:X.here ~of_enum:X.of_enum x [] X.max
+    loop ~here:M.here ~of_enum:M.of_enum x [] M.max
 
   let to_yojson ll = `Int (to_int ll)
 
@@ -28,6 +28,7 @@ module Make (X : Shared.S_Bitfield) : S with type t = X.t list = struct
   | `Int x -> Ok (of_int x)
   | json ->
     Error
-      (sprintf "Impossible to parse JSON '%s' into a bitfield at %s" (Yojson.Safe.to_string json)
-         (Source_code_position.to_string X.here))
+      (sprintf
+         !"Impossible to parse JSON '%{Yojson.Safe}' into a bitfield at %{Source_code_position}"
+         json M.here)
 end

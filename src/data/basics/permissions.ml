@@ -101,7 +101,7 @@ let sexp_of_t x = Sexp.Atom (to_string x)
 
 let t_of_sexp = function
 | Sexp.Atom s -> of_string s
-| sexp -> failwithf "Impossible to convert S-Exp '%s' into permissions" (Sexp.to_string sexp) ()
+| sexp -> failwithf !"Impossible to convert S-Exp '%{Sexp}' into permissions" sexp ()
 
 let to_yojson x = `String (to_string x)
 
@@ -110,7 +110,7 @@ let of_yojson = function
 | json -> Shared.invalid json "permissions"
 
 let%expect_test "Permissions of yojson" =
-  let test j = of_yojson j |> Result.ok_or_failwith |> [%sexp_of: t] |> Sexp.to_string |> print_endline in
+  let test j = of_yojson j |> Result.ok_or_failwith |> sprintf !"%{sexp: t}" |> print_endline in
   test (of_list [ SEND_MESSAGES; ADD_REACTIONS ] |> to_yojson);
   [%expect {| 2112 |}]
 
@@ -127,6 +127,6 @@ let%expect_test "Permissions checking" =
   [%expect {| false |}]
 
 let%expect_test "Permissions to list" =
-  let test z = to_list z |> [%sexp_of: Perm.t list] |> Sexp.to_string |> print_endline in
+  let test z = to_list z |> sprintf !"%{sexp: Perm.t list}" |> print_endline in
   test (Z.of_int 2112);
   [%expect {| (SEND_MESSAGES ADD_REACTIONS) |}]

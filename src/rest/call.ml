@@ -58,6 +58,6 @@ let run :
     handle
   | _ ->
     let%lwt body_str = force get_body_str in
-    failwithf "Invalid HTTP response (%s)\n%s\n%s" (Code.string_of_status status)
-      (Response.headers res |> Header.to_string)
-      body_str ()
+    failwithf
+      !"Invalid HTTP response (%{Code.string_of_status})\n%{Header}\n%s"
+      status (Response.headers res) body_str ()

@@ -8,7 +8,7 @@ module type Make_S = sig
   module Variants : sig
     val to_rank : t -> int
 
-    val to_name : t -> string
+    (* val to_name : t -> string *)
 
     val descriptions : (string * int) list
   end
@@ -36,8 +36,6 @@ module type S = sig
   val is_enum : unit
 end
 
-module JsonMap = Map.Make (Json)
-
 module Make_Int (X : Make_Int_S) : sig
   include S with type t := X.t
 end = struct
@@ -51,7 +49,7 @@ end = struct
 
   let lookup_of, lookup_to =
     Array.filter_mapi tags ~f:(fun i -> function
-      | name, 0 when i < last -> Some (Ok (X.t_of_sexp (Sexp.Atom name)), `Int i)
+      | name, 0 when i < last -> Some (Ok ([%of_sexp: X.t] (Sexp.Atom name)), `Int i)
       | "Unknown", 1 when i = last -> None
       | name, x ->
         failwithf
@@ -65,19 +63,17 @@ end = struct
   | `Int i -> Ok (X.unknown i)
   | json ->
     Error
-      (sprintf "Impossible to parse JSON '%s' into an Int Enum at %s" (Yojson.Safe.to_string json)
-         (Source_code_position.to_string X.here))
+      (sprintf
+         !"Impossible to parse JSON '%{Yojson.Safe}' into an Int Enum at %{Source_code_position}"
+         json X.here)
 
-  let to_yojson x =
+  let to_yojson x : Yojson.Safe.t =
     let i = X.Variants.to_rank x in
     try lookup_to.(i) with
     | Invalid_argument _ -> (
-      match X.sexp_of_t x with
+      match [%sexp_of: X.t] x with
       | Sexp.(List [ _; Atom s ]) -> `Intlit s
-      | sexp ->
-        failwithf "Assertion Failure at %s: %s"
-          (Source_code_position.to_string X.here)
-          (Sexp.to_string sexp) ()
+      | sexp -> failwithf !"Assertion Failure at %{Source_code_position}: %{Sexp}" X.here sexp ()
     )
 end
 
@@ -94,11 +90,11 @@ end = struct
 
   let lookup_of, lookup_to =
     let lookup_of, ll_to =
-      Array.foldi tags ~init:(JsonMap.empty, []) ~f:(fun i ((lookup_of, ll_to) as acc) -> function
+      Array.foldi tags ~init:(Json.Map.empty, []) ~f:(fun i ((lookup_of, ll_to) as acc) -> function
         | name, 0 when i < last ->
-          let x = X.t_of_sexp (Sexp.Atom name) in
-          let json = X.to_yojson x |> Yojson.Safe.Util.index 0 in
-          JsonMap.set lookup_of ~key:json ~data:x, json :: ll_to
+          let x = [%of_sexp: X.t] (Sexp.Atom name) in
+          let json = [%to_yojson: X.t] x |> Yojson.Safe.Util.index 0 in
+          Json.Map.set lookup_of ~key:json ~data:x, json :: ll_to
         | "Unknown", 1 when i = last -> acc
         | name, x ->
           failwithf
@@ -109,27 +105,25 @@ end = struct
     lookup_of, Array.of_list_rev ll_to
 
   let of_yojson json =
-    match JsonMap.find lookup_of json with
+    match Json.Map.find lookup_of json with
     | Some x -> Ok x
     | None -> (
-      match Yojson.Safe.Util.to_string_option json with
-      | Some s -> Ok (X.unknown s)
-      | None ->
+      match json with
+      | `String s -> Ok (X.unknown s)
+      | _ ->
         Error
-          (sprintf "Impossible to parse JSON '%s' into an Int Enum at %s" (Yojson.Safe.to_string json)
-             (Source_code_position.to_string X.here))
+          (sprintf
+             !"Impossible to parse JSON '%{Yojson.Safe}' into an Int Enum at %{Source_code_position}"
+             json X.here)
     )
 
   let to_yojson x =
     let i = X.Variants.to_rank x in
     try lookup_to.(i) with
     | Invalid_argument _ -> (
-      match X.sexp_of_t x with
+      match [%sexp_of: X.t] x with
       | Sexp.(List [ _; Atom s ]) -> `Intlit s
-      | sexp ->
-        failwithf "Assertion Failure at %s: %s"
-          (Source_code_position.to_string X.here)
-          (Sexp.to_string sexp) ()
+      | sexp -> failwithf !"Assertion Failure at %{Source_code_position}: %{Sexp}" X.here sexp ()
     )
 end
 
@@ -175,8 +169,7 @@ let%expect_test "Enum Int of yojson" =
     Yojson.Safe.from_string s
     |> M.of_yojson
     |> Result.ok_or_failwith
-    |> M.sexp_of_t
-    |> Sexp.to_string
+    |> sprintf !"%{sexp: M.t}"
     |> print_endline
   in
   test {|0|};
@@ -232,8 +225,7 @@ let%expect_test "Enum String of yojson" =
     Yojson.Safe.from_string s
     |> M.of_yojson
     |> Result.ok_or_failwith
-    |> M.sexp_of_t
-    |> Sexp.to_string
+    |> sprintf !"%{sexp: M.t}"
     |> print_endline
   in
   test {|"Abc"|};

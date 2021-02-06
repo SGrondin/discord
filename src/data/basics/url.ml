@@ -3,7 +3,7 @@ include Uri
 
 let t_of_sexp = function
 | Sexp.Atom s -> of_string s
-| sexp -> failwithf "Impossible to parse S-Exp %s into an URI" (Sexp.to_string sexp) ()
+| sexp -> failwithf !"Impossible to parse S-Exp %{Sexp} into an URI" sexp ()
 
 let sexp_of_t uri = Sexp.Atom (to_string uri)
 

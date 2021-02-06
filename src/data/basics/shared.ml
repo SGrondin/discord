@@ -26,9 +26,7 @@ let test m =
     Yojson.Safe.from_string s
     |> M.of_yojson
     |> Result.ok_or_failwith
-    |> [%sexp_of: M.t]
-    |> Sexp.to_string_hum
+    |> sprintf !"%{sexp: M.t}"
     |> print_endline
 
-let invalid json into =
-  Error (sprintf "Impossible to parse JSON '%s' into: %s" (Yojson.Safe.to_string json) into)
+let invalid json into = Error (sprintf !"Impossible to parse JSON '%{Yojson.Safe}' into: %s" json into)

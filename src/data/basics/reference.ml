@@ -22,23 +22,21 @@ type t =
   ]
 [@@deriving sexp, yojson]
 
-let ss = Snowflake.to_string
-
 let to_string = function
-| `User x -> sprintf "<@%s>" (ss x)
-| `User_nickname x -> sprintf "<@!%s>" (ss x)
-| `Channel x -> sprintf "<#%s>" (ss x)
-| `Role x -> sprintf "<@&%s>" (ss x)
+| `User x -> sprintf !"<@%{Snowflake}>" x
+| `User_nickname x -> sprintf !"<@!%{Snowflake}>" x
+| `Channel x -> sprintf !"<#%{Snowflake}>" x
+| `Role x -> sprintf !"<@&%{Snowflake}>" x
 | `Unicode_emoji x -> x
-| `Custom_emoji { animated = false; name; id } -> sprintf "<:%s:%s>" name (ss id)
-| `Custom_emoji { animated = true; name; id } -> sprintf "<a:%s:%s>" name (ss id)
+| `Custom_emoji { animated = false; name; id } -> sprintf !"<:%s:%{Snowflake}>" name id
+| `Custom_emoji { animated = true; name; id } -> sprintf !"<a:%s:%{Snowflake}>" name id
 
 let to_url r =
   begin
     match r with
     | `Unicode_emoji x -> x
-    | `Custom_emoji { animated = false; name; id } -> sprintf ":%s:%s" name (ss id)
-    | `Custom_emoji { animated = true; name; id } -> sprintf "a:%s:%s" name (ss id)
+    | `Custom_emoji { animated = false; name; id } -> sprintf !":%s:%{Snowflake}" name id
+    | `Custom_emoji { animated = true; name; id } -> sprintf !"a:%s:%{Snowflake}" name id
   end
   |> Uri.pct_encode
 

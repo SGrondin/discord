@@ -10,7 +10,7 @@ let sexp_of_t x = Sexp.Atom (to_string x)
 
 let t_of_sexp = function
 | Sexp.Atom s -> of_string s
-| sexp -> failwithf "Impossible to convert S-Exp '%s' into a Time" (Sexp.to_string sexp) ()
+| sexp -> failwithf !"Impossible to convert S-Exp '%{Sexp}' into a Time" sexp ()
 
 let to_yojson x = `String (to_string x)
 

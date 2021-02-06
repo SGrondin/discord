@@ -79,8 +79,7 @@ let received_ready ~session_id = function
 | (Starting _ as x)
  |(Connected _ as x) ->
   failwithf "Invalid internal state transition to_connected: %s. Please report this bug."
-    (sexp_of_t x |> Sexp.to_string)
-    ()
+    (sprintf !"%{sexp: t}" x) ()
 
 let received_seq seq = function
 | Starting _ -> ()

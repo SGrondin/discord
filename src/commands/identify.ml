@@ -109,7 +109,7 @@ let%expect_test "Intent bitfield to int" =
   [%expect {| 642 |}]
 
 let%expect_test "Login bitfield of int" =
-  let test x = Intents.of_int x |> [%sexp_of: Intents.t] |> Sexp.to_string |> print_endline in
+  let test x = Intents.of_int x |> sprintf !"%{sexp: Intents.t}" |> print_endline in
   test 514;
   [%expect {| (GUILD_MEMBERS GUILD_MESSAGES) |}];
   test 642;

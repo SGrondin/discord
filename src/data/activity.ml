@@ -129,12 +129,11 @@ let%expect_test "Party of yojson" =
     Yojson.Safe.from_string s
     |> Party.of_yojson
     |> Result.ok_or_failwith
-    |> [%sexp_of: Party.t]
-    |> Sexp.to_string
+    |> sprintf !"%{sexp: Party.t}"
     |> print_endline
   in
   test {|{"id":"foo","size":[4,12]}|};
-  [%expect {| ((id foo)(size((current_size 4)(max_size 12)))) |}]
+  [%expect {| ((id foo) (size ((current_size 4) (max_size 12)))) |}]
 
 let%expect_test "Activity of yojson" =
   let test = Shared.test (module Self) in

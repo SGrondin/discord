@@ -3,7 +3,7 @@ include Yojson.Safe
 
 let t_of_sexp = function
 | Sexp.Atom s -> from_string s
-| sexp -> failwithf "Impossible to parse S-Exp %s into Yojson.Safe.t" (Sexp.to_string sexp) ()
+| sexp -> failwithf !"Impossible to parse S-Exp %{Sexp} into Yojson.Safe.t" sexp ()
 
 let sexp_of_t uri = Sexp.Atom (to_string uri)
 
@@ -37,6 +37,12 @@ let compare left right =
   loop (to_basic left) (to_basic right)
 
 let equal = [%equal: t]
+
+type json_t = t [@@deriving sexp, compare]
+
+module Map = Map.Make (struct
+  type t = json_t [@@deriving sexp, compare]
+end)
 
 let to_yojson = Fn.id
 

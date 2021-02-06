@@ -86,7 +86,7 @@ let with_connection ?(extra_headers = Cohttp.Header.init ()) ?(random_string = W
         | Some accept when accept = b64_encoded_sha1sum (nonce ^ websocket_uuid) -> Lwt.return_unit
         | _ -> protocol_error "wrong accept"
       end
-      >>= fun () -> Lwt_log.info_f ~section "Connected to %s" (Uri.to_string uri)
+      >>= fun () -> Lwt_log.info_f ~section !"Connected to %{Uri}" uri
     in
     Lwt.catch drain_handshake (fun exn -> Lwt_io.close ic >>= fun () -> Lwt.fail exn) >>= fun () ->
     Lwt.return (ic, oc)

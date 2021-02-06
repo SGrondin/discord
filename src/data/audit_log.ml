@@ -250,10 +250,7 @@ module Change = struct
       | v -> (
         match Value.to_yojson v with
         | `List [ k; v ] -> k, v
-        | _ ->
-          failwithf "Serialization error for Audit Log Change: %s"
-            ([%sexp_of: t] change |> Sexp.to_string_hum)
-            ()
+        | _ -> failwithf !"Serialization error for Audit Log Change: %{sexp: t}" change ()
       )
     in
     let ov = Option.map ~f:make old_value in

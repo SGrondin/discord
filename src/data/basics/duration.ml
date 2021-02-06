@@ -37,8 +37,7 @@ let%expect_test "Seconds duration of yojson" =
     Yojson.Safe.from_string s
     |> Seconds.of_yojson
     |> Result.ok_or_failwith
-    |> [%sexp_of: Seconds.t]
-    |> Sexp.to_string
+    |> sprintf !"%{sexp: Seconds.t}"
     |> print_endline
   in
   test {|55|};
@@ -83,8 +82,7 @@ let%expect_test "Days duration of yojson" =
     Yojson.Safe.from_string s
     |> Days.of_yojson
     |> Result.ok_or_failwith
-    |> [%sexp_of: Days.t]
-    |> Sexp.to_string
+    |> sprintf !"%{sexp: Days.t}"
     |> print_endline
   in
   test {|55|};

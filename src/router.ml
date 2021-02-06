@@ -20,7 +20,7 @@ let reconnect ~wait state = Lwt.return (R_Reconnect (wait, state))
 type send = Websocket.Frame.t -> unit Lwt.t
 
 let send_response send message =
-  let content = Data.Payload.to_yojson message |> Yojson.Safe.to_string in
+  let content = [%to_yojson: Data.Payload.t] message |> Yojson.Safe.to_string in
   Websocket.Frame.create ~opcode:Text ~content () |> send
 
 let latch_identify = Latch.(create ~cooldown:(Time.sec 5L))
@@ -81,7 +81,5 @@ let handle_message login ~send ({ internal_state; user_state } as state) = funct
  |({ op = Voice_state_update; _ } as x), _
  |({ op = Resume; _ } as x), _
  |({ op = Request_guild_members; _ } as x), _ ->
-  failwithf "Unexpected opcode: %s. Please report this bug."
-    ([%sexp_of: Data.Payload.t] x |> Sexp.to_string)
-    ()
+  failwithf !"Unexpected opcode: %{sexp: Data.Payload.t}. Please report this bug." x ()
 | _ -> forward state
