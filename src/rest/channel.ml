@@ -9,6 +9,8 @@ module Create_message = struct
     nonce: string;
     tts: bool;
     embed: Data.Embed.t option; [@default None]
+    allowed_mentions: Data.Allowed_mention.t option; [@default None]
+    message_reference: Data.Message.Reference.t option; [@default None]
   }
   [@@deriving sexp, fields, to_yojson]
 end
@@ -24,11 +26,18 @@ let get_channel_message ~token ~channel_id ~message_id =
   let uri = Call.make_uri [ "channels"; ss channel_id; "messages"; ss message_id ] in
   Call.run ~headers `GET uri (Parse [%of_yojson: Data.Message.t])
 
-let create_message ~token ~channel_id ~content ?embed () =
+let create_message ~token ~channel_id ~content ?embed ?allowed_mentions ?message_reference () =
   let body =
     Call.JSON
       (Create_message.to_yojson
-         { content; nonce = Latch.Time.get () |> Int64.to_string; tts = false; embed })
+         {
+           content;
+           nonce = Latch.Time.get () |> Int64.to_string;
+           tts = false;
+           embed;
+           allowed_mentions;
+           message_reference;
+         })
   in
   let headers = Header.add (Call.headers ~token) "content-type" "application/json" in
   let uri = Call.make_uri [ "channels"; ss channel_id; "messages" ] in

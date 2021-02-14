@@ -9,6 +9,8 @@ val create_message :
   channel_id:Snowflake.t ->
   content:string ->
   ?embed:Data.Embed.t ->
+  ?allowed_mentions:Data.Allowed_mention.t ->
+  ?message_reference:Data.Message.Reference.t ->
   unit ->
   Data.Message.t Lwt.t
 

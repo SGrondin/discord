@@ -24,6 +24,7 @@ module Type = struct
       | Deprecated_type_3
       | Deprecated_type_4
       | REPLY
+      | APPLICATION_COMMAND
       | Unknown                                of int
     [@@deriving sexp, compare, equal, variants, yojson { strict = false }]
 
@@ -77,6 +78,7 @@ module Reference = struct
     message_id: Snowflake.t option; [@default None]
     channel_id: Snowflake.t option; [@default None]
     guild_id: Snowflake.t option; [@default None]
+    fail_if_not_exists: bool option; [@default None]
   }
   [@@deriving sexp, compare, equal, fields, yojson { strict = false }]
 end
@@ -357,7 +359,7 @@ let%expect_test "Message of yojson" =
        (application ())
        (message_reference
         (((message_id (306588351130107906)) (channel_id (278325129692446722))
-          (guild_id (278325129692446720)))))
+          (guild_id (278325129692446720)) (fail_if_not_exists ()))))
        (flags ((IS_CROSSPOST))) (stickers ()) (referenced_message ())) |}];
   test
     {|

@@ -23,6 +23,7 @@ module Type : sig
     | Deprecated_type_3
     | Deprecated_type_4
     | REPLY
+    | APPLICATION_COMMAND
     | Unknown                                of int
   [@@deriving variants]
 
@@ -71,6 +72,7 @@ module Reference : sig
     message_id: Snowflake.t option;
     channel_id: Snowflake.t option;
     guild_id: Snowflake.t option;
+    fail_if_not_exists: bool option;
   }
   [@@deriving fields]
 
