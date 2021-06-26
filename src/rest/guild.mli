@@ -18,3 +18,8 @@ val get_guild_audit_logs :
   ?limit:int ->
   unit ->
   Data.Audit_log.t Lwt.t
+
+val get_guild_roles : token:string -> guild_id:Basics.Snowflake.t -> Data.Role.t list Lwt.t
+
+val remove_guild_member :
+  token:string -> guild_id:Basics.Snowflake.t -> user_id:Basics.Snowflake.t -> unit Lwt.t

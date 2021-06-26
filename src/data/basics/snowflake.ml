@@ -3,6 +3,9 @@ open Int64
 
 type t = Int64.t [@@deriving sexp, compare, equal]
 
+module Set = Int64.Set
+module Map = Int64.Map
+
 let of_yojson = function
 | `String s -> Ok (of_string s)
 | `Intlit s -> Ok (of_string s)

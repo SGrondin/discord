@@ -31,3 +31,13 @@ let get_guild_audit_logs ~token ~guild_id ?user_id ?action_type ?before ?limit (
     |> add_param "limit" Int.to_string limit
   in
   Call.run ~headers `GET uri (Parse [%of_yojson: Data.Audit_log.t])
+
+let get_guild_roles ~token ~guild_id =
+  let headers = Call.headers ~token in
+  let uri = Call.make_uri [ "guilds"; ss guild_id; "roles" ] in
+  Call.run ~headers `GET uri (Parse [%of_yojson: Data.Role.t list])
+
+let remove_guild_member ~token ~guild_id ~user_id =
+  let headers = Call.headers ~token in
+  let uri = Call.make_uri [ "guilds"; ss guild_id; "members"; ss user_id ] in
+  Call.run ~headers `DELETE uri ~expect:204 Call.Ignore
