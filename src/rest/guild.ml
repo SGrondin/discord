@@ -41,3 +41,13 @@ let remove_guild_member ~token ~guild_id ~user_id =
   let headers = Call.headers ~token in
   let uri = Call.make_uri [ "guilds"; ss guild_id; "members"; ss user_id ] in
   Call.run ~headers `DELETE uri ~expect:204 Call.Ignore
+
+let add_guild_member_role ~token ~guild_id ~user_id ~role_id =
+  let headers = Call.headers ~token in
+  let uri = Call.make_uri [ "guilds"; ss guild_id; "members"; ss user_id; "roles"; ss role_id ] in
+  Call.run ~headers `PUT uri ~expect:204 Call.Ignore
+
+let remove_guild_member_role ~token ~guild_id ~user_id ~role_id =
+  let headers = Call.headers ~token in
+  let uri = Call.make_uri [ "guilds"; ss guild_id; "members"; ss user_id; "roles"; ss role_id ] in
+  Call.run ~headers `DELETE uri ~expect:204 Call.Ignore

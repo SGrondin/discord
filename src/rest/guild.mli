@@ -23,3 +23,17 @@ val get_guild_roles : token:string -> guild_id:Basics.Snowflake.t -> Data.Role.t
 
 val remove_guild_member :
   token:string -> guild_id:Basics.Snowflake.t -> user_id:Basics.Snowflake.t -> unit Lwt.t
+
+val add_guild_member_role :
+  token:string ->
+  guild_id:Basics.Snowflake.t ->
+  user_id:Basics.Snowflake.t ->
+  role_id:Basics.Snowflake.t ->
+  unit Lwt.t
+
+val remove_guild_member_role :
+  token:string ->
+  guild_id:Basics.Snowflake.t ->
+  user_id:Basics.Snowflake.t ->
+  role_id:Basics.Snowflake.t ->
+  unit Lwt.t
